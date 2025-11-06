@@ -1,4 +1,3 @@
-codigo main robot futbolero
 /*
 Comentarios: (1) ajustar las variables "duracion", "intensidad", "niveles", "tiempoRebote", "tiempoGiro180", "tiempoCarga", "tiempoGolpe",
 (2) pensar si cambiar los delay() de las 4 estrategias por millis()
@@ -30,7 +29,7 @@ int tiempoGolpe = 300;    // Duración del golpe en ms
 // Corrección de PWM al motor derecho (IN1_R y IN2_R)
 // Sale con Fritas tiene K = 10
 // Chispitas tiene K = 0
-  int K = 0;
+int K = 0;
 
 //--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
