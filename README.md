@@ -13,7 +13,7 @@
   5. En dicha sección debería aparecer la ESP con su MAC Adress.
 
 #### 2) Grabar la MAC Adress correcta al mando:
-  1. Ejecutar SixaxisPair
+  1. Descargar e instalar ![SixaxisPairTool](https://www.filehorse.com/es/download-sixaxispairtool/).
   2. Abrir la aplicación y conectar el mando a la computadora mediante un cable USB.
   3. Si es la primera vez que se conecta el mando, se descargarán e instalarán los drivers adecuados.
   4. Una vez finalizado el proceso, en la aplicación meter la MAC Adress de la ESP y darle a actualizar.
