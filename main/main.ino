@@ -29,7 +29,7 @@ Comentarios: (1) ajustar las variables "duracion", "intensidad", "niveles", "tie
 #define ZONA_DRIFT 10 // Si el drift del control varía, se cambia la constante numérica
 
 #define PWM_MIN 180
-#define PWM_MAX PWM_MAX
+#define PWM_MAX 232
 
 // Variables para control de velocidad
 float factorVelocidad = 2.0;                  // Factor multiplicador de velocidad (inicia en velocidad máxima)
@@ -105,240 +105,44 @@ void movimiento() {
   // Normalización
   // TODO: probar con normalización vectorial
 
-  // HASTA ACÁ SE LEYÓ Y COMPRENDIÓ EL CÓDIGO, SE PENSÓ UNA NUEVA IDEA PARA EL CÁLCULO VECTORIAL DE LA MAGNITUD Y Y ÁNGULO 
-  // CON EL FIN DE QUE SEA SENCILLO DE ENTENDER Y CAMBIAR EN EL CÓDIGO.
-  // SE PENSÓ EL USO DE SENOS Y COSENOS ÚNICAMENTE Y ELIMINAR LA PARTE DE LÓBULOS O REESCRIBIRLA
-
   float normX = ejeX_Der / 127.0; // Se entiende que la normalización estará entre -1 y 1
   float normY = ejeY_Der / 127.0;
 
   // Ángulo y magnitud
-  float magnitud = constrain(sqrt(normX * normX + normY * normY), 0.0, 1.0); // TODO cambiar a nombre más intuitivo y correcto
-  float angulo = atan2(normY, normX);  // -π a π en radianes
-
+  float magnitud = constrain(sqrt(normX * normX + normY * normY), 0.0, 1.0); // TODO cambiar a nombre más intuitivo y correcto  
+  float angulo = atan2(normY, normX);  // La función determina el angulo en cualquier cuadrante, respecto del eje X; será de -π a π en radianes
   pwm = constrain(127 * magnitud * factorVelocidad, PWM_MIN, PWM_MAX);
-  // --- entrada: angulo en radianes (-PI..PI), pwm ya calculado ---
-  // Queremos picos en:  0° (izq), 90° (ambos), 180° (der), 270° (ambos negativos)
-  // Usamos cos como base y combinaciones para tener los efectos deseados.
 
-  // convertir theta a [0,2PI)
-  float theta = angulo;
-  if (theta < 0) theta += 2.0f * PI;
+  if (angulo < 0) angulo += 2.0 * PI; // convertimos al angulo entre [0;2pi)
+  float sentido_frontales = sin(angulo); // Debe darnos entre -1 y 1, lo cual nos indicará para la función el sentido atras y adelante.
+  float sentido_laterales = cos(angulo); // El coseno nos va a indicar en nuestro mapa de circunferencia unitaria, qué tan a la izq o der se moverá
 
-  // usar versiones float de cos y max
-  float pico0 = fmaxf(0.0f, cosf(theta - 0.0f));
-  float pico90 = fmaxf(0.0f, cosf(theta - PI / 2.0f));
-  float pico180 = fmaxf(0.0f, cosf(theta - PI));
-  float pico270 = fmaxf(0.0f, cosf(theta - 3.0f * PI / 2.0f));
+  // Calculo un pwm para darle al motor si quiero girar a alguno de los lados
+  if (sentido_laterales >= 0.0) { 
+    pwmIzq = pwm * sentido_laterales * magnitud;
+  } else{
+    pwmDer = pwm * sentido_laterales * magnitud;
+  }
 
-  // Esto crea lóbulos positivos alrededor de cada punto.
-  // Queremos que en 90° y 270° ambos motores tengan magnitud, en 0° sólo izq, en 180 sólo der.
-  // Construimos magnitudes (positivo) y luego aplicamos signo según adelante/atrás.
-
-  float magIzq = 0.0f;
-  float magDer = 0.0f;
-
-  // combinar lóbulos para obtener la forma deseada
-  magIzq = pico90 + pico0 + pico270;
-  magDer = pico90 + pico180 + pico270;
-
-  // ajustar pesos relativos: en 90 queremos ambos fuertes (ya suman pico90); en 270 queremos ambos negativos:
-  // para 270 detectamos retroceso por el seno (o por theta) y aplicamos signo negativo
-  // normalizamos magnitudes para que la mayor valga 1
-  float fmax = max(magIzq, magDer);
-  if (fmax <= 0.0f) fmax = 1.0f;
-  magIzq /= fmax;
-  magDer /= fmax;
-
-  // definir signo (adelante/atrás) según componente Y original (normY) o según ángulo
-  // mejor usar sin(angulo) para dirección continua: sin(theta) >0 => hacia adelante (90), <0 => atrás (270)
-  float sentido = sin(angulo);  // >0 adelante, <0 atrás
-
-  // convertir mag a valores con signo entre -1 y 1; si querés permitir giro en sitio (motores opuestos),
-  // entonces para ángulos cercanos a 0 o 180 el otro motor debe ser 0 (ya lo logramos con combinación).
-  float outIzq = magIzq * (sentido >= 0 ? 1.0f : -1.0f);
-  float outDer = magDer * (sentido >= 0 ? 1.0f : -1.0f);
-
-  // escalar al PWM seguro
-  float pwmIzqF = outIzq * pwm;
-  float pwmDerF = outDer * pwm;
-
-  // aplicar a los H-bridge (manteniendo tu lógica de sentido con normY si preferís)
-  if (pwmIzqF >= 0) {
-    ledcWrite(Adelante_Izq, (int)round(constrain(pwmIzqF, 0, PWM_MAX)));
+  // Acá creo que vuelve al flotante a un entero, mediante int y el redondeo con round
+  if (pwmIzq >= 0) {
+    ledcWrite(Adelante_Izq, (int)round(constrain(abs(pwmIzq), 0, PWM_MAX)));
     ledcWrite(Atras_Izq, 0);
   } else {
     ledcWrite(Adelante_Izq, 0);
-    ledcWrite(Atras_Izq, (int)round(constrain(-pwmIzqF, 0, PWM_MAX)));
+    ledcWrite(Atras_Izq, (int)round(constrain(abs(pwmIzq), 0, PWM_MAX))); 
   }
-  if (pwmDerF >= 0) {
-    ledcWrite(Adelante_Der, (int)round(constrain(pwmDerF, 0, PWM_MAX)) + K);
+
+  if (pwmDer >= 0) {
+    ledcWrite(Adelante_Der, (int)round(constrain(abs(pwmDer), 0, PWM_MAX)) + K);
     ledcWrite(Atras_Der, 0);
   } else {
     ledcWrite(Adelante_Der, 0);
-    ledcWrite(Atras_Der, (int)round(constrain(-pwmDerF, 0, PWM_MAX)) + K);
+    ledcWrite(Atras_Der, (int)round(constrain(abs(pwmDer), 0, PWM_MAX)) + K);
   }
 
   // Registro
   deb(Serial.printf("Ángulo:%.2f | PWM:%d | PWM_L:%d PWM_R:%d\n", angulo * 180 / PI, pwm, pwmIzq, pwmDer);)
-}
-
-// Estrategia 1 - giro brusco de 180° a la izquierda
-void giro180Izquierda() {
-  // Motor izquierdo apagado
-  ledcWrite(Adelante_Izq, 0);
-  ledcWrite(Atras_Izq, 0);
-  ledcWrite(Atras_Der, 0);
-
-  // Motor derecho gira hacia adelante
-  ledcWrite(Adelante_Der, PWM_MAX + K);  // PWM calibrado para giro
-  delay(tiempoGiro180);   // Tiempo estimado para giro completo
-  detenerMotores();       // Detener ambos motores
-}
-
-// Estrategia 2 - giro brusco de 180° a la derecha
-void giro180Derecha() {
-  // Motor derecho apagado
-  ledcWrite(Adelante_Der, 0);
-  ledcWrite(Atras_Der, 0);
-  ledcWrite(Atras_Izq, 0);
-
-  // Motor izquierdo gira hacia adelante
-  ledcWrite(Adelante_Izq, PWM_MAX);  // PWM calibrado para giro
-  delay(tiempoGiro180);   // Tiempo estimado para giro completo
-  detenerMotores();       // Detener ambos motores
-}
-
-// Estrategia 3 - patada con la derecha
-void patadaDerecha() {
-  int fuerzaR2 = PS4.R2Value();                    // 0 a 255
-  if (fuerzaR2 < 10) return;                       // Zona muerta
-  int pwmGolpe = map(fuerzaR2, 0, 255, 180, PWM_MAX);  // PWM proporcional al gatillo
-
-  // Paso 1: Carga (retroceso leve del motor derecho)
-  ledcWrite(Adelante_Der, 0);    // Sentido atrás
-  ledcWrite(Atras_Der, 180 + K);  // PWM moderado para carga
-  ledcWrite(Atras_Izq, 0);    // Motor izquierdo apagado
-  ledcWrite(Adelante_Izq, 0);
-  delay(tiempoCarga);
-
-  // Paso 2: Golpe (avance fuerte del motor derecho)
-  ledcWrite(Adelante_Der, pwmGolpe + K);  // Sentido adelante
-  ledcWrite(Atras_Der, 0);         // PWM proporcional
-  delay(tiempoGolpe);
-  detenerMotores();  // Detener ambos motores
-
-  deb(Serial.printf("Patada derecha | PWM:%d | Carga:%dms | Golpe:%dms | Fuerza R2:%d\n", pwmGolpe, tiempoCarga, tiempoGolpe, fuerzaR2);)
-  }
-
-// Estrategia 4 - patada con la izquierda
-void patadaIzquierda() {
-  int fuerzaL2 = PS4.L2Value();                    // 0 a 255
-  if (fuerzaL2 < 10) return;                       // Zona muerta
-  int pwmGolpe = map(fuerzaL2, 0, 255, 180, PWM_MAX);  // PWM proporcional al gatillo
-
-  // Paso 1: Carga (retroceso leve del motor izquierdo)
-  ledcWrite(Adelante_Izq, 0);    // Sentido atrás
-  ledcWrite(Atras_Izq, 180);  // PWM moderado para carga
-  ledcWrite(Atras_Der, 0);    // Motor derecho apagado
-  ledcWrite(Adelante_Der, 0);
-  delay(tiempoCarga);
-
-  // Paso 2: Golpe (avance fuerte del motor izquierdo)
-  ledcWrite(Atras_Izq, 0);         // Sentido adelante
-  ledcWrite(Adelante_Izq, pwmGolpe);  // PWM proporcional
-  delay(tiempoGolpe);
-  detenerMotores();  // Detener ambos motores
-
-  deb(Serial.printf("Patada izquierda | PWM:%d | Carga:%dms | Golpe:%dms | Fuerza L2:%d\n", pwmGolpe, tiempoCarga, tiempoGolpe, fuerzaL2);)
-}
-
-// Adelante con triangulo
-void adelante() {
-  if (nivelActual == 0) {
-    ledcWrite(Adelante_Izq, 180);
-    ledcWrite(Adelante_Der, 180 + K);
-    ledcWrite(Atras_Izq, 0);
-    ledcWrite(Atras_Der, 0);
-  } else if (nivelActual == 1) {
-    ledcWrite(Adelante_Izq, 206);
-    ledcWrite(Adelante_Der, 206 + K);
-    ledcWrite(Atras_Izq, 0);
-    ledcWrite(Atras_Der, 0);
-  } else if (nivelActual == 2) {
-    ledcWrite(Adelante_Izq, PWM_MAX);
-    ledcWrite(Adelante_Der, PWM_MAX + K);
-    ledcWrite(Atras_Izq, 0);
-    ledcWrite(Atras_Der, 0);
-  } else {
-    return;
-  }
-}
-
-// Atrás con cruz
-void atras() {
-  if (nivelActual == 0) {
-    ledcWrite(Atras_Izq, 180);
-    ledcWrite(Atras_Der, 180 + K);
-    ledcWrite(Adelante_Izq, 0);
-    ledcWrite(Adelante_Der, 0);
-  } else if (nivelActual == 1) {
-    ledcWrite(Atras_Izq, 206);
-    ledcWrite(Atras_Der, 206 + K);
-    ledcWrite(Adelante_Izq, 0);
-    ledcWrite(Adelante_Der, 0);
-  } else if (nivelActual == 2) {
-    ledcWrite(Atras_Izq, PWM_MAX);
-    ledcWrite(Atras_Der, PWM_MAX + K);
-    ledcWrite(Adelante_Izq, 0);
-    ledcWrite(Adelante_Der, 0);
-  } else {
-    return;
-  }
-}
-
-// Izquierda con círculo
-void izquierda() {
-  if (nivelActual == 0) {
-    ledcWrite(Adelante_Izq, 180);
-    ledcWrite(Adelante_Der, 0);
-    ledcWrite(Atras_Izq, 0);
-    ledcWrite(Atras_Der, 0);
-  } else if (nivelActual == 1) {
-    ledcWrite(Adelante_Izq, 206);
-    ledcWrite(Adelante_Der, 0);
-    ledcWrite(Atras_Izq, 0);
-    ledcWrite(Atras_Der, 0);
-  } else if (nivelActual == 2) {
-    ledcWrite(Adelante_Izq, PWM_MAX);
-    ledcWrite(Adelante_Der, 0);
-    ledcWrite(Atras_Izq, 0);
-    ledcWrite(Atras_Der, 0);
-  } else {
-    return;
-  }
-}
-
-// Derecha con cuadrado
-void derecha() {
-  if (nivelActual == 0) {
-    ledcWrite(Adelante_Der, 180 + K);
-    ledcWrite(Adelante_Izq, 0);
-    ledcWrite(Atras_Izq, 0);
-    ledcWrite(Atras_Der, 0);
-  } else if (nivelActual == 1) {
-    ledcWrite(Adelante_Der, 206 + K);
-    ledcWrite(Adelante_Izq, 0);
-    ledcWrite(Atras_Izq, 0);
-    ledcWrite(Atras_Der, 0);
-  } else if (nivelActual == 2) {
-    ledcWrite(Adelante_Der, PWM_MAX + K);
-    ledcWrite(Adelante_Izq, 0);
-    ledcWrite(Atras_Izq, 0);
-    ledcWrite(Atras_Der, 0);
-  } else {
-    return;
-  }
 }
 
 // Adelante con 255
@@ -374,10 +178,10 @@ void setup() {
   PS4.begin();  // Colocar la MAC del mando si es necesario
 
   // Pines PWM
-  ledcAttach(Adelante_Der, PWM_FREQ, PWM_RES);  // PWM Izquierdo
-  ledcAttach(Atras_Der, PWM_FREQ, PWM_RES);  // PWM Derecho
-  ledcAttach(Adelante_Izq, PWM_FREQ, PWM_RES);  // PWM Izquierdo
-  ledcAttach(Atras_Izq, PWM_FREQ, PWM_RES);  // PWM Derecho
+  ledcAttach(Adelante_Der, PWM_FREQ, PWM_RES);  // PWM motor Derecho
+  ledcAttach(Atras_Der, PWM_FREQ, PWM_RES);  
+  ledcAttach(Adelante_Izq, PWM_FREQ, PWM_RES);  // PWM motor Izquierdo
+  ledcAttach(Atras_Izq, PWM_FREQ, PWM_RES); 
   pinMode(PIN_LED, OUTPUT);
 }
 
@@ -386,46 +190,27 @@ void loop() {
   if (PS4.isConnected()) {
     int r = 170, g = 0, b = 220;  // Variabes para color del control
     PS4.setLed(r, g, b);          // Color del control
-
     digitalWrite(PIN_LED, HIGH);
 
     bool subir = PS4.Up();
     bool bajar = PS4.Down();
+  
     if (subir || bajar) {
       controlVelocidad(subir, bajar);
     }
+    movimiento ();
+    antiReboteTriang ();
+    antiReboteCruz ();
+    antiReboteCirc ();
+    antiReboteCuad ();
 
-    movimiento();
-
-    unsigned long ultimoTriangulo = 0;
-    const unsigned long tiempoRebote = 200;
-
-    if (PS4.Triangle() && millis() - ultimoTriangulo > tiempoRebote) {
-      adelante();
-      ultimoTriangulo = millis();
-    }
-    unsigned long ultimoCruz = 0;
-    if (PS4.Cross() && millis() - ultimoCruz > tiempoRebote) {
-      atras();
-      ultimoCruz = millis();
-    }
-    unsigned long ultimoCirculo = 0;
-    if (PS4.Circle() && millis() - ultimoCirculo > tiempoRebote) {
-      izquierda();
-      ultimoCirculo = millis();
-    }
-    unsigned long ultimoCuadrado = 0;
-    if (PS4.Square() && millis() - ultimoCuadrado > tiempoRebote) {
-      derecha();
-      ultimoCuadrado = millis();
-    }
     unsigned long ultimoIzquierda = 0;
-    if (PS4.Left() && millis() - ultimoIzquierda > tiempoRebote) {
+    if (PS4.L2() && millis() - ultimoIzquierda > tiempoRebote) {
       giro180Izquierda();
       ultimoIzquierda = millis();
     }
     unsigned long ultimoDerecha = 0;
-    if (PS4.Right() && millis() - ultimoDerecha > tiempoRebote) {
+    if (PS4.R2() && millis() - ultimoDerecha > tiempoRebote) {
       giro180Derecha();
       ultimoDerecha = millis();
     }
@@ -433,12 +218,6 @@ void loop() {
     if (PS4.R1() && millis() - ultimoMaxima > tiempoRebote) {
       maxima();
       ultimoMaxima = millis();
-    }
-    if (PS4.R2()) {
-      patadaDerecha();  // Control con R2
-    }
-    if (PS4.L2()) {
-      patadaIzquierda();  // Control con L2
     }
     if (PS4.Touchpad()) {
       bateriaControl();  // Control con touchpad
