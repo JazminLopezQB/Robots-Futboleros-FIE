@@ -1,6 +1,8 @@
 // Librerias
 #include <PS4Controller.h>
 #include <Arduino.h>
+#include <ManejoConBotones.hpp>
+#include <Estrategias.hpp>
 
 // Adelante con triangulo
 void adelante() {

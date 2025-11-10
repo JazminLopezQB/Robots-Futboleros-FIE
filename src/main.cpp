@@ -1,18 +1,21 @@
+#include <Arduino.h>
+#include <PS4Controller.h>
+#include <ManejoConBotones.hpp>
+#include <Estrategias.hpp>
 /*
 Comentarios: (1) ajustar las variables "duracion", "intensidad", "niveles", "tiempoRebote", "tiempoGiro180", "tiempoCarga", "tiempoGolpe",
 (2) pensar si cambiar los delay() de las 4 estrategias por millis()
 */
 
-//#define DEB   // Descomentar deb para mostrar los serial
+// Librerias
+
+
+// Descomentar deb en platformio.ini para mostrar los serial
 #ifdef DEB
   #define deb(x) x
 #else 
   #define deb(x)
 #endif
-
-// Librerias
-#include <PS4Controller.h>
-#include <Arduino.h>
 
 // Pines físicos conectados a los DRV8833
 #define Atras_Izq 18    
@@ -28,8 +31,8 @@ Comentarios: (1) ajustar las variables "duracion", "intensidad", "niveles", "tie
 // Para la función de la zona muerta
 #define ZONA_DRIFT 10 // Si el drift del control varía, se cambia la constante numérica
 
-#define PWM_MIN 180
-#define PWM_MAX 232
+const int PWM_MIN = 180;
+const int PWM_MAX = 232;
 
 // Variables para control de velocidad
 float factorVelocidad = 2.0;                  // Factor multiplicador de velocidad (inicia en velocidad máxima)
@@ -181,7 +184,8 @@ void setup() {
   ledcAttach(Adelante_Der, PWM_FREQ, PWM_RES);  // PWM motor Derecho
   ledcAttach(Atras_Der, PWM_FREQ, PWM_RES);  
   ledcAttach(Adelante_Izq, PWM_FREQ, PWM_RES);  // PWM motor Izquierdo
-  ledcAttach(Atras_Izq, PWM_FREQ, PWM_RES); 
+  ledcAttach(Atras_Izq, PWM_FREQ, PWM_RES);
+   
   pinMode(PIN_LED, OUTPUT);
 }
 

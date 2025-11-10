@@ -1,5 +1,6 @@
-reconocimiento bluetooth
 /*
+//reconocimiento bluetooth
+
 Código #: 1
 Nombre del archivo: 1_bluetooth_comunication.cpp  
 Fecha: 23/08/2025  

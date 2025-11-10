@@ -1,6 +1,9 @@
 // Librerias
 #include <PS4Controller.h>
 #include <Arduino.h>
+#include <Estrategias.hpp>
+#include <ManejoConBotones.hpp>
+
 
 // Estrategia 1 - giro brusco de 180° a la izquierda
 void giro180Izquierda() {
