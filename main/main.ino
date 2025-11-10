@@ -3,35 +3,53 @@ Comentarios: (1) ajustar las variables "duracion", "intensidad", "niveles", "tie
 (2) pensar si cambiar los delay() de las 4 estrategias por millis()
 */
 
+//#define DEB   // Descomentar deb para mostrar los serial
+#ifdef DEB
+  #define deb(x) x
+#else 
+  #define deb(x)
+#endif
+
+// Librerias
 #include <PS4Controller.h>
+#include <Arduino.h>
 
 // Pines físicos conectados a los DRV8833
-#define IN2_L 18    // Atrás izquierda
-#define IN1_L 21    // Adelante izquierda
-#define IN2_R 25    // Atrás derecha
-#define IN1_R 26    // Adelante derecha
+#define Atras_Izq 18    
+#define Adelante_Izq 21    
+#define Atras_Der 25
+#define Adelante_Der 26
 #define PIN_LED 13  // LED
 
 // Configuración PWM
 #define PWM_FREQ 20000  // Frecuencia en Hz
-#define PWM_RES 8       // Resolución en bits (0–255)
+#define PWM_RES 8       // Resolución en bits (0 - 2^(PWM_RES)-1)
+
+// Para la función de la zona muerta
+#define ZONA_DRIFT 10 // Si el drift del control varía, se cambia la constante numérica
+
+#define PWM_MIN 180
+#define PWM_MAX PWM_MAX
 
 // Variables para control de velocidad
-float factorVelocidad = 2.0;                  // Factor multiplicador de velocidad (inicial: máxima)
+float factorVelocidad = 2.0;                  // Factor multiplicador de velocidad (inicia en velocidad máxima)
 int nivelActual = 2;                          // Nivel actual (2 = velocidad máxima)
-const float niveles[3] = { 1.5, 1.65, 2.0 };  // Factores de velocidad por nivel (bajo, medio, alto)
+
+const int cantNiveles = 3;
+const float niveles[cantNiveles] = { 1.5, 1.65, 2.0 };  // Factores de velocidad por nivel (bajo, medio, alto)
 
 // Variables para tiempos
 int tiempoGiro180 = 685;  // Tiempo que tarda en girar 180°
 int tiempoCarga = 300;    // Duración del retroceso en ms
 int tiempoGolpe = 300;    // Duración del golpe en ms
 
-// Corrección de PWM al motor derecho (IN1_R y IN2_R)
+// Corrección de PWM al motor derecho (Adelante_Der y Atras_Der)
 // Sale con Fritas tiene K = 10
 // Chispitas tiene K = 0
-int K = 0;
+uint8_t K = 0;
+// TODO comprobar con módulo usado en seguidores
 
-//--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------------------------------------
 
 // Función para ajustar el nivel de velocidad con flechas arriba y abajo (las estrategias no se ven afectadas por esta función)
 unsigned long tiempoUltimoCambio = 0;    // Marca de tiempo del último ajuste
@@ -40,17 +58,16 @@ const unsigned long tiempoRebote = 200;  // Tiempo mínimo entre ajustes (ms)
 void controlVelocidad(bool subir, bool bajar) {
   unsigned long ahora = millis();
   if (ahora - tiempoUltimoCambio >= tiempoRebote) {
-    if (subir && nivelActual < 2) {
+    if (subir && nivelActual < cantNiveles) {
       nivelActual++;
       factorVelocidad = niveles[nivelActual];
-      Serial.printf("Nivel %d | Factor %.2f\n", nivelActual, factorVelocidad);
+      deb(Serial.printf("Nivel %d | Factor %.2f\n", nivelActual, factorVelocidad);)
       tiempoUltimoCambio = ahora;
     }
-
     if (bajar && nivelActual > 0) {
       nivelActual--;
       factorVelocidad = niveles[nivelActual];
-      Serial.printf("Nivel %d | Factor %.2f\n", nivelActual, factorVelocidad);
+      deb(Serial.printf("Nivel %d | Factor %.2f\n", nivelActual, factorVelocidad);)
       tiempoUltimoCambio = ahora;
     }
   }
@@ -58,10 +75,10 @@ void controlVelocidad(bool subir, bool bajar) {
 
 // Función para detener los motores
 void detenerMotores() {
-  ledcWrite(IN1_R, 0);
-  ledcWrite(IN2_R, 0);
-  ledcWrite(IN1_L, 0);
-  ledcWrite(IN2_L, 0);
+  ledcWrite(Adelante_Der, 0);
+  ledcWrite(Atras_Der, 0);
+  ledcWrite(Adelante_Izq, 0);
+  ledcWrite(Atras_Izq, 0);
 }
 
 // Función de desplazamiento vectorial y rotación simultánea
@@ -71,23 +88,35 @@ void movimiento() {
   int pwmIzq = 0;
 
   // Lectura del joystick derecho en X e Y
-  int ejeX = PS4.RStickX();  // -127 a 127
-  int ejeY = PS4.RStickY();  // -127 a 127
+  int ejeX_Der = PS4.RStickX();  // -127 a 127
+  int ejeY_Der = PS4.RStickY();  // -127 a 127
+  int ejeX_Izq = PS4.LStickX();  // -127 a 127
+  int ejeY_Izq = PS4.LStickY();  // -127 a 127
 
-  // Zona muerta
-  if (abs(ejeX) < 10 && abs(ejeY) < 10 && abs(PS4.LStickX()) < 10) {
+  // TODO: revisar que devuelven los ejes, si ya son flotantes luego no se pasa nuevamente
+
+  // Zona muerta de las palancas
+  // Sirve para que si las palancas se encuentran en una zona aproximadamente central, los motores se detengan.
+  if (abs(ejeX_Der) < ZONA_DRIFT && abs(ejeY_Der) < ZONA_DRIFT && abs(ejeX_Izq) < ZONA_DRIFT && abs(ejeY_Izq) < ZONA_DRIFT ) {
     detenerMotores();
     return;
   }
 
   // Normalización
-  float normX = ejeX / 127.0;
-  float normY = ejeY / 127.0;
+  // TODO: probar con normalización vectorial
+
+  // HASTA ACÁ SE LEYÓ Y COMPRENDIÓ EL CÓDIGO, SE PENSÓ UNA NUEVA IDEA PARA EL CÁLCULO VECTORIAL DE LA MAGNITUD Y Y ÁNGULO 
+  // CON EL FIN DE QUE SEA SENCILLO DE ENTENDER Y CAMBIAR EN EL CÓDIGO.
+  // SE PENSÓ EL USO DE SENOS Y COSENOS ÚNICAMENTE Y ELIMINAR LA PARTE DE LÓBULOS O REESCRIBIRLA
+
+  float normX = ejeX_Der / 127.0; // Se entiende que la normalización estará entre -1 y 1
+  float normY = ejeY_Der / 127.0;
 
   // Ángulo y magnitud
-  float magnitud = constrain(sqrt(normX * normX + normY * normY), 0.0, 1.0);
-  float angulo = atan2(normY, normX);  // -π a π
-  pwm = constrain(127 * magnitud * factorVelocidad, 180, 232);
+  float magnitud = constrain(sqrt(normX * normX + normY * normY), 0.0, 1.0); // TODO cambiar a nombre más intuitivo y correcto
+  float angulo = atan2(normY, normX);  // -π a π en radianes
+
+  pwm = constrain(127 * magnitud * factorVelocidad, PWM_MIN, PWM_MAX);
   // --- entrada: angulo en radianes (-PI..PI), pwm ya calculado ---
   // Queremos picos en:  0° (izq), 90° (ambos), 180° (der), 270° (ambos negativos)
   // Usamos cos como base y combinaciones para tener los efectos deseados.
@@ -136,33 +165,33 @@ void movimiento() {
 
   // aplicar a los H-bridge (manteniendo tu lógica de sentido con normY si preferís)
   if (pwmIzqF >= 0) {
-    ledcWrite(IN1_L, (int)round(constrain(pwmIzqF, 0, 232)));
-    ledcWrite(IN2_L, 0);
+    ledcWrite(Adelante_Izq, (int)round(constrain(pwmIzqF, 0, PWM_MAX)));
+    ledcWrite(Atras_Izq, 0);
   } else {
-    ledcWrite(IN1_L, 0);
-    ledcWrite(IN2_L, (int)round(constrain(-pwmIzqF, 0, 232)));
+    ledcWrite(Adelante_Izq, 0);
+    ledcWrite(Atras_Izq, (int)round(constrain(-pwmIzqF, 0, PWM_MAX)));
   }
   if (pwmDerF >= 0) {
-    ledcWrite(IN1_R, (int)round(constrain(pwmDerF, 0, 232)) + K);
-    ledcWrite(IN2_R, 0);
+    ledcWrite(Adelante_Der, (int)round(constrain(pwmDerF, 0, PWM_MAX)) + K);
+    ledcWrite(Atras_Der, 0);
   } else {
-    ledcWrite(IN1_R, 0);
-    ledcWrite(IN2_R, (int)round(constrain(-pwmDerF, 0, 232)) + K);
+    ledcWrite(Adelante_Der, 0);
+    ledcWrite(Atras_Der, (int)round(constrain(-pwmDerF, 0, PWM_MAX)) + K);
   }
 
   // Registro
-  Serial.printf("Ángulo:%.2f | PWM:%d | PWM_L:%d PWM_R:%d\n", angulo * 180 / PI, pwm, pwmIzq, pwmDer);
+  deb(Serial.printf("Ángulo:%.2f | PWM:%d | PWM_L:%d PWM_R:%d\n", angulo * 180 / PI, pwm, pwmIzq, pwmDer);)
 }
 
 // Estrategia 1 - giro brusco de 180° a la izquierda
 void giro180Izquierda() {
   // Motor izquierdo apagado
-  ledcWrite(IN1_L, 0);
-  ledcWrite(IN2_L, 0);
-  ledcWrite(IN2_R, 0);
+  ledcWrite(Adelante_Izq, 0);
+  ledcWrite(Atras_Izq, 0);
+  ledcWrite(Atras_Der, 0);
 
   // Motor derecho gira hacia adelante
-  ledcWrite(IN1_R, 232 + K);  // PWM calibrado para giro
+  ledcWrite(Adelante_Der, PWM_MAX + K);  // PWM calibrado para giro
   delay(tiempoGiro180);   // Tiempo estimado para giro completo
   detenerMotores();       // Detener ambos motores
 }
@@ -170,12 +199,12 @@ void giro180Izquierda() {
 // Estrategia 2 - giro brusco de 180° a la derecha
 void giro180Derecha() {
   // Motor derecho apagado
-  ledcWrite(IN1_R, 0);
-  ledcWrite(IN2_R, 0);
-  ledcWrite(IN2_L, 0);
+  ledcWrite(Adelante_Der, 0);
+  ledcWrite(Atras_Der, 0);
+  ledcWrite(Atras_Izq, 0);
 
   // Motor izquierdo gira hacia adelante
-  ledcWrite(IN1_L, 232);  // PWM calibrado para giro
+  ledcWrite(Adelante_Izq, PWM_MAX);  // PWM calibrado para giro
   delay(tiempoGiro180);   // Tiempo estimado para giro completo
   detenerMotores();       // Detener ambos motores
 }
@@ -184,63 +213,63 @@ void giro180Derecha() {
 void patadaDerecha() {
   int fuerzaR2 = PS4.R2Value();                    // 0 a 255
   if (fuerzaR2 < 10) return;                       // Zona muerta
-  int pwmGolpe = map(fuerzaR2, 0, 255, 180, 232);  // PWM proporcional al gatillo
+  int pwmGolpe = map(fuerzaR2, 0, 255, 180, PWM_MAX);  // PWM proporcional al gatillo
 
   // Paso 1: Carga (retroceso leve del motor derecho)
-  ledcWrite(IN1_R, 0);    // Sentido atrás
-  ledcWrite(IN2_R, 180 + K);  // PWM moderado para carga
-  ledcWrite(IN2_L, 0);    // Motor izquierdo apagado
-  ledcWrite(IN1_L, 0);
+  ledcWrite(Adelante_Der, 0);    // Sentido atrás
+  ledcWrite(Atras_Der, 180 + K);  // PWM moderado para carga
+  ledcWrite(Atras_Izq, 0);    // Motor izquierdo apagado
+  ledcWrite(Adelante_Izq, 0);
   delay(tiempoCarga);
 
   // Paso 2: Golpe (avance fuerte del motor derecho)
-  ledcWrite(IN1_R, pwmGolpe + K);  // Sentido adelante
-  ledcWrite(IN2_R, 0);         // PWM proporcional
+  ledcWrite(Adelante_Der, pwmGolpe + K);  // Sentido adelante
+  ledcWrite(Atras_Der, 0);         // PWM proporcional
   delay(tiempoGolpe);
   detenerMotores();  // Detener ambos motores
 
-  Serial.printf("Patada derecha | PWM:%d | Carga:%dms | Golpe:%dms | Fuerza R2:%d\n", pwmGolpe, tiempoCarga, tiempoGolpe, fuerzaR2);
-}
+  deb(Serial.printf("Patada derecha | PWM:%d | Carga:%dms | Golpe:%dms | Fuerza R2:%d\n", pwmGolpe, tiempoCarga, tiempoGolpe, fuerzaR2);)
+  }
 
 // Estrategia 4 - patada con la izquierda
 void patadaIzquierda() {
   int fuerzaL2 = PS4.L2Value();                    // 0 a 255
   if (fuerzaL2 < 10) return;                       // Zona muerta
-  int pwmGolpe = map(fuerzaL2, 0, 255, 180, 232);  // PWM proporcional al gatillo
+  int pwmGolpe = map(fuerzaL2, 0, 255, 180, PWM_MAX);  // PWM proporcional al gatillo
 
   // Paso 1: Carga (retroceso leve del motor izquierdo)
-  ledcWrite(IN1_L, 0);    // Sentido atrás
-  ledcWrite(IN2_L, 180);  // PWM moderado para carga
-  ledcWrite(IN2_R, 0);    // Motor derecho apagado
-  ledcWrite(IN1_R, 0);
+  ledcWrite(Adelante_Izq, 0);    // Sentido atrás
+  ledcWrite(Atras_Izq, 180);  // PWM moderado para carga
+  ledcWrite(Atras_Der, 0);    // Motor derecho apagado
+  ledcWrite(Adelante_Der, 0);
   delay(tiempoCarga);
 
   // Paso 2: Golpe (avance fuerte del motor izquierdo)
-  ledcWrite(IN2_L, 0);         // Sentido adelante
-  ledcWrite(IN1_L, pwmGolpe);  // PWM proporcional
+  ledcWrite(Atras_Izq, 0);         // Sentido adelante
+  ledcWrite(Adelante_Izq, pwmGolpe);  // PWM proporcional
   delay(tiempoGolpe);
   detenerMotores();  // Detener ambos motores
 
-  Serial.printf("Patada izquierda | PWM:%d | Carga:%dms | Golpe:%dms | Fuerza L2:%d\n", pwmGolpe, tiempoCarga, tiempoGolpe, fuerzaL2);
+  deb(Serial.printf("Patada izquierda | PWM:%d | Carga:%dms | Golpe:%dms | Fuerza L2:%d\n", pwmGolpe, tiempoCarga, tiempoGolpe, fuerzaL2);)
 }
 
 // Adelante con triangulo
 void adelante() {
   if (nivelActual == 0) {
-    ledcWrite(IN1_L, 180);
-    ledcWrite(IN1_R, 180 + K);
-    ledcWrite(IN2_L, 0);
-    ledcWrite(IN2_R, 0);
+    ledcWrite(Adelante_Izq, 180);
+    ledcWrite(Adelante_Der, 180 + K);
+    ledcWrite(Atras_Izq, 0);
+    ledcWrite(Atras_Der, 0);
   } else if (nivelActual == 1) {
-    ledcWrite(IN1_L, 206);
-    ledcWrite(IN1_R, 206 + K);
-    ledcWrite(IN2_L, 0);
-    ledcWrite(IN2_R, 0);
+    ledcWrite(Adelante_Izq, 206);
+    ledcWrite(Adelante_Der, 206 + K);
+    ledcWrite(Atras_Izq, 0);
+    ledcWrite(Atras_Der, 0);
   } else if (nivelActual == 2) {
-    ledcWrite(IN1_L, 232);
-    ledcWrite(IN1_R, 232 + K);
-    ledcWrite(IN2_L, 0);
-    ledcWrite(IN2_R, 0);
+    ledcWrite(Adelante_Izq, PWM_MAX);
+    ledcWrite(Adelante_Der, PWM_MAX + K);
+    ledcWrite(Atras_Izq, 0);
+    ledcWrite(Atras_Der, 0);
   } else {
     return;
   }
@@ -249,20 +278,20 @@ void adelante() {
 // Atrás con cruz
 void atras() {
   if (nivelActual == 0) {
-    ledcWrite(IN2_L, 180);
-    ledcWrite(IN2_R, 180 + K);
-    ledcWrite(IN1_L, 0);
-    ledcWrite(IN1_R, 0);
+    ledcWrite(Atras_Izq, 180);
+    ledcWrite(Atras_Der, 180 + K);
+    ledcWrite(Adelante_Izq, 0);
+    ledcWrite(Adelante_Der, 0);
   } else if (nivelActual == 1) {
-    ledcWrite(IN2_L, 206);
-    ledcWrite(IN2_R, 206 + K);
-    ledcWrite(IN1_L, 0);
-    ledcWrite(IN1_R, 0);
+    ledcWrite(Atras_Izq, 206);
+    ledcWrite(Atras_Der, 206 + K);
+    ledcWrite(Adelante_Izq, 0);
+    ledcWrite(Adelante_Der, 0);
   } else if (nivelActual == 2) {
-    ledcWrite(IN2_L, 232);
-    ledcWrite(IN2_R, 232 + K);
-    ledcWrite(IN1_L, 0);
-    ledcWrite(IN1_R, 0);
+    ledcWrite(Atras_Izq, PWM_MAX);
+    ledcWrite(Atras_Der, PWM_MAX + K);
+    ledcWrite(Adelante_Izq, 0);
+    ledcWrite(Adelante_Der, 0);
   } else {
     return;
   }
@@ -271,20 +300,20 @@ void atras() {
 // Izquierda con círculo
 void izquierda() {
   if (nivelActual == 0) {
-    ledcWrite(IN1_L, 180);
-    ledcWrite(IN1_R, 0);
-    ledcWrite(IN2_L, 0);
-    ledcWrite(IN2_R, 0);
+    ledcWrite(Adelante_Izq, 180);
+    ledcWrite(Adelante_Der, 0);
+    ledcWrite(Atras_Izq, 0);
+    ledcWrite(Atras_Der, 0);
   } else if (nivelActual == 1) {
-    ledcWrite(IN1_L, 206);
-    ledcWrite(IN1_R, 0);
-    ledcWrite(IN2_L, 0);
-    ledcWrite(IN2_R, 0);
+    ledcWrite(Adelante_Izq, 206);
+    ledcWrite(Adelante_Der, 0);
+    ledcWrite(Atras_Izq, 0);
+    ledcWrite(Atras_Der, 0);
   } else if (nivelActual == 2) {
-    ledcWrite(IN1_L, 232);
-    ledcWrite(IN1_R, 0);
-    ledcWrite(IN2_L, 0);
-    ledcWrite(IN2_R, 0);
+    ledcWrite(Adelante_Izq, PWM_MAX);
+    ledcWrite(Adelante_Der, 0);
+    ledcWrite(Atras_Izq, 0);
+    ledcWrite(Atras_Der, 0);
   } else {
     return;
   }
@@ -293,20 +322,20 @@ void izquierda() {
 // Derecha con cuadrado
 void derecha() {
   if (nivelActual == 0) {
-    ledcWrite(IN1_R, 180 + K);
-    ledcWrite(IN1_L, 0);
-    ledcWrite(IN2_L, 0);
-    ledcWrite(IN2_R, 0);
+    ledcWrite(Adelante_Der, 180 + K);
+    ledcWrite(Adelante_Izq, 0);
+    ledcWrite(Atras_Izq, 0);
+    ledcWrite(Atras_Der, 0);
   } else if (nivelActual == 1) {
-    ledcWrite(IN1_R, 206 + K);
-    ledcWrite(IN1_L, 0);
-    ledcWrite(IN2_L, 0);
-    ledcWrite(IN2_R, 0);
+    ledcWrite(Adelante_Der, 206 + K);
+    ledcWrite(Adelante_Izq, 0);
+    ledcWrite(Atras_Izq, 0);
+    ledcWrite(Atras_Der, 0);
   } else if (nivelActual == 2) {
-    ledcWrite(IN1_R, 232 + K);
-    ledcWrite(IN1_L, 0);
-    ledcWrite(IN2_L, 0);
-    ledcWrite(IN2_R, 0);
+    ledcWrite(Adelante_Der, PWM_MAX + K);
+    ledcWrite(Adelante_Izq, 0);
+    ledcWrite(Atras_Izq, 0);
+    ledcWrite(Atras_Der, 0);
   } else {
     return;
   }
@@ -314,10 +343,10 @@ void derecha() {
 
 // Adelante con 255
 void maxima() {
-  ledcWrite(IN1_L, 255);
-  ledcWrite(IN1_R, 255);
-  ledcWrite(IN2_L, 0);
-  ledcWrite(IN2_R, 0);
+  ledcWrite(Adelante_Izq, 255);
+  ledcWrite(Adelante_Der, 255);
+  ledcWrite(Atras_Izq, 0);
+  ledcWrite(Atras_Der, 0);
 }
 
 // Función para representar el nivel de batería del mando PS4 mediante vibración proporcional
@@ -334,21 +363,21 @@ void bateriaControl() {
   PS4.sendToController();
 
   // Registro en consola para trazabilidad
-  Serial.printf("Nivel batería del mando: %d/12 | Vibración: %d ms\n", nivel, duracion);
+  deb(Serial.printf("Nivel batería del mando: %d/12 | Vibración: %d ms\n", nivel, duracion);)
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 // Setup
 void setup() {
-  Serial.begin(115200);
+  deb(Serial.begin(115200);)
   PS4.begin();  // Colocar la MAC del mando si es necesario
 
   // Pines PWM
-  ledcAttach(IN1_R, PWM_FREQ, PWM_RES);  // PWM Izquierdo
-  ledcAttach(IN2_R, PWM_FREQ, PWM_RES);  // PWM Derecho
-  ledcAttach(IN1_L, PWM_FREQ, PWM_RES);  // PWM Izquierdo
-  ledcAttach(IN2_L, PWM_FREQ, PWM_RES);  // PWM Derecho
+  ledcAttach(Adelante_Der, PWM_FREQ, PWM_RES);  // PWM Izquierdo
+  ledcAttach(Atras_Der, PWM_FREQ, PWM_RES);  // PWM Derecho
+  ledcAttach(Adelante_Izq, PWM_FREQ, PWM_RES);  // PWM Izquierdo
+  ledcAttach(Atras_Izq, PWM_FREQ, PWM_RES);  // PWM Derecho
   pinMode(PIN_LED, OUTPUT);
 }
 
