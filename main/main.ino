@@ -3,7 +3,7 @@ Comentarios: (1) ajustar las variables "duracion", "intensidad", "niveles", "tie
 (2) pensar si cambiar los delay() de las 4 estrategias por millis()
 */
 
-//#define DEB   // Descomentar deb para mostrar los serial
+#define DEB   // Descomentar deb para mostrar los serial
 #ifdef DEB
   #define deb(x) x
 #else 
