@@ -2,12 +2,23 @@
 #include <Arduino.h>
 #include "config.h"
 
-ControllerPtr myControllers[BP32_MAX_GAMEPADS];
+extern GamepadInfo gamepads[BP32_MAX_GAMEPADS];
+
+extern bool whitelistEnabled;
+
+extern uint8_t allowedController[6];
+
+extern Preferences prefs;
+
+extern String authorizedGamepad;
+
+extern String connectedGamepad;
 
 // ===================================== Función para Detectar Conexión =====================================
 void onConnectedController(ControllerPtr ctl) { // Se crea un objeto ctl
 // Se inicializa al Slot a emparejar como vacío.
 	bool foundEmptySlot = false; 
+    ControllerProperties properties = ctl->getProperties();
 
 // Se recorre la cantidad máxima de mandos a conectar (hasta 4 a la vez)
 	for (int i = 0; i < BP32_MAX_GAMEPADS; i++) {
@@ -19,15 +30,84 @@ void onConnectedController(ControllerPtr ctl) { // Se crea un objeto ctl
 		// Imprimo características de nuestro mando 'ctl'
 			Serial.printf("Controller model: %s, VID=0x%04x, PID=0x%04x\n", ctl->getModelName().c_str(), properties.vendor_id, properties.product_id);
 		// Le adjudico al slot libre, mi mando		
-			myControllers[i] = ctl;
-		// Le paso 'true' a mi valor centinela que determina si hay slots libres; de esta manera.
-			foundEmptySlot = true;
+        myControllers[i] = ctl;
+
+        gamepads[i].ctl = ctl;
+        gamepads[i].connected = true;
+        gamepads[i].name = ctl->getModelName().c_str();
+
+        foundEmptySlot = true;
+
 			break;
 		}
 	}
 	if (!foundEmptySlot) {
 		Serial.println("CALLBACK: Controller connected, but could not found empty slot");
 	}
+
+    // =========================================
+    // ======== OBTENER MAC DEL MANDO ==========
+    // =========================================
+
+    char macStr[18];
+
+    sprintf(
+        macStr,
+        "%02X:%02X:%02X:%02X:%02X:%02X",
+        ctl->getProperties().btaddr[0],
+        ctl->getProperties().btaddr[1],
+        ctl->getProperties().btaddr[2],
+        ctl->getProperties().btaddr[3],
+        ctl->getProperties().btaddr[4],
+        ctl->getProperties().btaddr[5]
+    );
+
+    String currentMac = String(macStr);
+
+    Serial.print("Mando conectado: ");
+    Serial.println(currentMac);
+
+    for(int i = 0; i < BP32_MAX_GAMEPADS; i++){
+
+        if(gamepads[i].ctl == ctl){
+
+            gamepads[i].mac = currentMac;
+        }
+    }
+
+    // =========================================
+    // ========= VALIDAR WHITELIST =============
+    // =========================================
+
+    if (whitelistEnabled && !pairingMode) {
+
+        bool allowed = memcmp(
+            ctl->getProperties().btaddr,
+            allowedController,
+            6
+        ) == 0;
+
+        if (!allowed) {
+
+            Serial.println("Mando NO autorizado");
+
+            ctl->disconnect();
+
+            return;
+        }
+
+        Serial.println("Mando autorizado");
+    }
+}
+
+bool isControllerAllowed(ControllerPtr ctl) {
+    if (!whitelistEnabled) return false;
+
+    return memcmp(
+        ctl->getProperties().btaddr,
+        allowedController,
+        6
+    ) == 0;
 }
 
 // ===================================== Función de Desconexión de Mando =====================================
@@ -40,9 +120,15 @@ void onDisconnectedController(ControllerPtr ctl) {
 		if (myControllers[i] == ctl) {
 			Serial.printf("CALLBACK: Controller disconnected from index=%d\n", i);
 		// Borro las características del mando de la lista de mandos conectados
-			myControllers[i] = nullptr;
-		// 'true' a eliminar el mando
-			foundController = true;
+            myControllers[i] = nullptr;
+
+            gamepads[i].connected = false;
+            gamepads[i].mac = "";
+            gamepads[i].name = "";
+            gamepads[i].ctl = nullptr;
+
+            foundController = true;
+
 			break;
 		}
 	}

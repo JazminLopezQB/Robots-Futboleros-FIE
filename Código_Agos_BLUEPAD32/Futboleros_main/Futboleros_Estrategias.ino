@@ -11,7 +11,7 @@ void giro180Izquierda() {
 
   // Motor derecho gira hacia adelante
   ledcWrite(CH_ADELANTE_DER, PWM_MAX); // + K);  // PWM calibrado para giro
-  delay(tiempoGiro180);   // Tiempo estimado para giro completo
+  delay(tiempoGiro180/2);   // Tiempo estimado para giro completo
   detenerMotores();       // Detener ambos motores
 }
 
@@ -24,6 +24,6 @@ void giro180Derecha() {
 
   // Motor izquierdo gira hacia adelante
   ledcWrite(CH_ADELANTE_IZQ, PWM_MAX);  // PWM calibrado para giro
-  delay(tiempoGiro180);   // Tiempo estimado para giro completo
+  delay(tiempoGiro180/2);   // Tiempo estimado para giro completo
   detenerMotores();       // Detener ambos motores
 }
