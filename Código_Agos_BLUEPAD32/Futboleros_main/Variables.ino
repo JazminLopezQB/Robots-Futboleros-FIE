@@ -14,5 +14,5 @@ int tiempoCarga = 300;
 int tiempoGolpe = 300;
 const unsigned long tiempoRebote = 200;
 
-uint8_t K = 10;
+uint8_t K = 0;
 

@@ -53,6 +53,8 @@ void atras() {
     return;
 }
 
+// En los viejos y la bestia 1.0 funcion izq y der al reves
+
 // Izquierda con círculo
 void izquierda() {
   switch(nivelActual){

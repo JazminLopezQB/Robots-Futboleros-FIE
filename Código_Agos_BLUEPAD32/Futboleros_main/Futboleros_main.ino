@@ -13,7 +13,14 @@ void processControllers();
 void processControllers();
 void giro180Izquierda();
 void giro180Derecha();
+void iniciarAccessPoint();
+void apagarAccessPoint(); 
+void controlarAccessPoint();
 //
+
+bool apActivo = false;
+unsigned long inicioAP = 0;
+const unsigned long DURACION_AP = 120000; // 2 minutos
 
 // Variables Globales para Web
 WebServer server(80);
@@ -119,12 +126,12 @@ void movimiento(ControllerPtr ctl) {
     //      2. Avanzar y girar a la derecha: si Y = +100 y X = +50; motor izquierdo recibe +150 y el derecho +50 (La rueda izquierda gira más rápido, provocando un giro hacia la derecha).
     //      3. Girar en el lugar sobre el eje: si Y = 0 y X = +100; el motor izquierdo recibe +100 y el derecho -100 (Las ruedas giran en sentidos opuestos, rotando el vehículo en el lugar).
 
-    float pwmIzq = (normY + normX) * 127.0 * factorVelocidad;
-    float pwmDer = (normY - normX) * 127.0 * factorVelocidad;
+    float pwmIzq = (normY + normX) * 127.0 * factorVelocidad; // -Bestia1.0 //otros al reves
+    float pwmDer = (normY - normX) * 127.0 * factorVelocidad; // +Bestia1.0 //otros al reves
 
     // Se limita el PWM de los motores con los valores predefinidos en 'config.h'
-    pwmIzq = constrain(pwmIzq, -PWM_MIN, PWM_MAX);
-    pwmDer = constrain(pwmDer, -PWM_MIN, PWM_MAX);
+    pwmIzq = constrain(pwmIzq, -PWM_MAX, PWM_MAX);
+    pwmDer = constrain(pwmDer, -PWM_MAX, PWM_MAX);
 
     // Detecto los sentidos y activo los motores correspondientes para el giro:
     if (pwmIzq >= 0) {
@@ -144,6 +151,78 @@ void movimiento(ControllerPtr ctl) {
     }
 }
 
+void iniciarAccessPoint() {
+
+    WiFi.mode(WIFI_AP);
+
+    // IMPORTANTE:
+    // No usamos WiFi.setSleep(false)
+    // porque queremos reducir consumo.
+
+    //Bestia 1.0 192.168.9.1
+    //Bestia 2.0 192.168.10.1
+    //Bella 192.168.11.1
+
+    IPAddress local_IP(192, 168, 11, 1);
+    IPAddress gateway(192, 168, 11, 1);
+    IPAddress subnet(255, 255, 255, 0);
+
+    WiFi.softAPConfig(local_IP, gateway, subnet);
+
+
+    bool ok = WiFi.softAP(
+        "Robot-Bella",
+        "Fulbo123",
+        1,
+        false,
+        1
+    );
+
+    if (ok) {
+
+        apActivo = true;
+        inicioAP = millis();
+
+        Serial.println("========== WIFI AP ==========");
+        Serial.println("AP iniciado");
+        Serial.print("IP: ");
+        Serial.println(WiFi.softAPIP());
+
+    } else {
+
+        Serial.println("ERROR AL INICIAR AP");
+
+    }
+}
+
+void apagarAccessPoint() {
+
+    if (!apActivo)
+        return;
+
+    Serial.println("========== WIFI AP ==========");
+    Serial.println("2 minutos cumplidos.");
+    Serial.println("Apagando Access Point...");
+
+    WiFi.softAPdisconnect(true);
+
+    WiFi.mode(WIFI_OFF);
+
+    apActivo = false;
+
+    Serial.println("Access Point apagado.");
+}
+
+void controlarAccessPoint() {
+    if (!apActivo)
+        return;
+
+    if (millis() - inicioAP >= DURACION_AP) {
+
+        apagarAccessPoint();
+
+    }
+}
 // ========================================================================
 // ============================== SETUP ==============================
 // ========================================================================
@@ -172,29 +251,9 @@ void setup() {
     //Serial.printf("BD Addr: %2X:%2X:%2X:%2X:%2X:%2X\n", addr[0], addr[1], addr[2], addr[3], addr[4], addr[5]);
 
     // ====================== WIFI AP ==========================
-    WiFi.mode(WIFI_MODE_AP);
+    iniciarAccessPoint();
 
-    WiFi.setSleep(false);
 
-    bool ok = WiFi.softAP(
-        "Robot-Futbolero"
-       /* "Fulbo123",
-        1,
-        false,
-        1*/
-    );
-
-    delay(500);
-
-    Serial.println("========== WIFI ==========");
-
-    if(ok){
-        Serial.println("AP iniciado");
-    }else{
-        Serial.println("ERROR AP");
-    }
-
-    Serial.println(WiFi.softAPIP());
     // =================== CARGAR WHITELIST ====================
 
     prefs.begin("gamepad", true);
@@ -509,16 +568,21 @@ server.on("/disconnect", [](){
 
 }
 
-
 // ========================================================================
 // ============================== LOOP ==============================
 // ========================================================================
 
 void loop() {
-    server.handleClient();
+    controlarAccessPoint();
+
+    if (apActivo) {
+        server.handleClient();
+    }
 
     bool dataUpdated = BP32.update();
-    if (dataUpdated) processControllers();
+
+    if (dataUpdated)
+        processControllers();
 
     // Se recorre la lista de mandos conectados, y si hay uno conectado y está enviando información: 
     for (auto ctl : myControllers) {
@@ -549,14 +613,22 @@ void loop() {
             // Se actualizan el estado previo del botón:
             prevY = y;
             prevA = a;
+            // ================= CONTROL POR BOTONES =================
 
-            // Por ahora se comentó la función de manejar al robot con los botones, tanto para pruebas como 
-            // porque no es realmente necesario. En caso de mal funcionamiento de un stick, cambiar al otro.
-            //antiReboteTriang(ctl);
-            //antiReboteCruz(ctl);
-            //antiReboteCirc(ctl);
-            //antiReboteCuad(ctl);
-            //movimiento(ctl);
+            antiReboteTriang(ctl);
+            antiReboteCruz(ctl);
+            antiReboteCirc(ctl);
+            antiReboteCuad(ctl);
+
+
+            // ================= CONTROL POR STICK =================
+
+            bool botonMovimiento =
+                ctl->y() ||
+                ctl->a() ||
+                ctl->b() ||
+                ctl->x();
+
 
             static unsigned long ultimoIzquierda = 0;
             if (ctl->brake() && millis() - ultimoIzquierda > tiempoRebote) {
@@ -580,10 +652,9 @@ void loop() {
                 ledcWrite(CH_ADELANTE_DER, 255);
                 ledcWrite(CH_ATRAS_IZQ, 0);
                 ledcWrite(CH_ATRAS_DER, 0);
-            } else {
+            } else if (!botonMovimiento) {
                 movimiento(ctl);
             }
-
         }
 
     delay(1);

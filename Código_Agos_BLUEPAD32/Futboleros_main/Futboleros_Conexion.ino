@@ -41,9 +41,12 @@ void onConnectedController(ControllerPtr ctl) { // Se crea un objeto ctl
 			break;
 		}
 	}
+    
 	if (!foundEmptySlot) {
 		Serial.println("CALLBACK: Controller connected, but could not found empty slot");
 	}
+
+    digitalWrite(PIN_LED, HIGH);
 
     // =========================================
     // ======== OBTENER MAC DEL MANDO ==========
@@ -132,6 +135,8 @@ void onDisconnectedController(ControllerPtr ctl) {
 			break;
 		}
 	}
+
+        digitalWrite(PIN_LED, LOW);
 
 	if (!foundController) {
 		Serial.println("CALLBACK: Controller disconnected, but not found in myControllers");
