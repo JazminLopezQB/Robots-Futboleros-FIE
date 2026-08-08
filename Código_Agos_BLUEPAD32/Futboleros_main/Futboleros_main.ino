@@ -177,11 +177,11 @@ void setup() {
     WiFi.setSleep(false);
 
     bool ok = WiFi.softAP(
-        "Robot-Futbolero",
-        "Fulbo123",
+        "Robot-Futbolero"
+       /* "Fulbo123",
         1,
         false,
-        1
+        1*/
     );
 
     delay(500);
