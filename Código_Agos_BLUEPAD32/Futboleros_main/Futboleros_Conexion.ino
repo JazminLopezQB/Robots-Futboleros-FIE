@@ -115,14 +115,21 @@ bool isControllerAllowed(ControllerPtr ctl) {
 
 // ===================================== Función de Desconexión de Mando =====================================
 // Es la misma función de conexión, pero borro con 'nullptr' el mando de la lista de mandos conectados.
+
 void onDisconnectedController(ControllerPtr ctl) {
 
-	bool foundController = false;
-	
-	for (int i = 0; i < BP32_MAX_GAMEPADS; i++) {
-		if (myControllers[i] == ctl) {
-			Serial.printf("CALLBACK: Controller disconnected from index=%d\n", i);
-		// Borro las características del mando de la lista de mandos conectados
+    bool foundController = false;
+
+    for (int i = 0; i < BP32_MAX_GAMEPADS; i++) {
+
+        if (myControllers[i] == ctl) {
+
+            Serial.printf(
+                "CALLBACK: Controller disconnected from index=%d\n",
+                i
+            );
+
+            // Liberar el slot
             myControllers[i] = nullptr;
 
             gamepads[i].connected = false;
@@ -132,15 +139,38 @@ void onDisconnectedController(ControllerPtr ctl) {
 
             foundController = true;
 
-			break;
-		}
-	}
+            break;
+        }
+    }
 
+    // ==========================================
+    // LED SEGÚN ESTADO REAL DEL MANDO
+    // ==========================================
+
+    bool hayMando = false;
+
+    for (int i = 0; i < BP32_MAX_GAMEPADS; i++) {
+
+        if (myControllers[i] != nullptr &&
+            myControllers[i]->isConnected()) {
+
+            hayMando = true;
+            break;
+        }
+    }
+
+    if (hayMando) {
+        digitalWrite(PIN_LED, HIGH);
+    } else {
         digitalWrite(PIN_LED, LOW);
+    }
 
-	if (!foundController) {
-		Serial.println("CALLBACK: Controller disconnected, but not found in myControllers");
-	}
+    if (!foundController) {
+        Serial.println(
+            "CALLBACK: Controller disconnected, "
+            "but not found in myControllers"
+        );
+    }
 }
 
 // ===================================== Prueba Serial de Mando =====================================

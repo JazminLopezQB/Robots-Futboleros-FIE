@@ -8,12 +8,12 @@
 #define ZONA_DRIFT 10 // Cambiar valor según ajuste y joystick.
 
 // Pines de los motores (NO CAMBIAR) =======
-#define Atras_Izq 26
-#define Adelante_Izq 265
-#define Atras_Der 12
-#define Adelante_Der 14
+#define Atras_Izq 25
+#define Adelante_Izq 26
+#define Atras_Der 14
+#define Adelante_Der 12
 
-//Bestia 2.0 - 25 26 14 12
+// Bestia 2.0 - 25 26 14 12
 // Bella 26 25 12 14
 // Bestia tranqui 25 26 18 21
 
@@ -26,8 +26,7 @@
 
 // Los siguientes PWM son los límites admisibles de funcionamiento de los motores.
 // Revisar muy bien la placa, y el motor previo a sugerir un cambio.
-#define PWM_MIN 180
-#define PWM_MAX 220
+extern uint8_t PWM_MAX; 
 
 // Definiciónn de canales PWM ==============
 #define CH_ADELANTE_DER 0
@@ -50,6 +49,14 @@ extern int tiempoCarga;
 extern int tiempoGolpe;
 extern const unsigned long tiempoRebote;
 
-// Constante K para equiparar los motores, un motor va más lento que otro
-extern uint8_t K;
+extern int anguloGiro;
 
+// Constante K para equiparar los motores, un motor va más lento que otro
+extern uint8_t K_IZQ;
+extern uint8_t K_DER;
+
+// PWM actual de los motores
+extern int pwmActualAdelanteIzq;
+extern int pwmActualAtrasIzq;
+extern int pwmActualAdelanteDer;
+extern int pwmActualAtrasDer;

@@ -16,6 +16,11 @@ void giro180Derecha();
 void iniciarAccessPoint();
 void apagarAccessPoint(); 
 void controlarAccessPoint();
+void cargarConfiguracionMotores();
+void escribirPWM();
+
+void giroIzquierda(int grados);
+void giroDerecha(int grados);
 //
 
 bool apActivo = false;
@@ -25,6 +30,12 @@ const unsigned long DURACION_AP = 120000; // 2 minutos
 // Variables Globales para Web
 WebServer server(80);
 Preferences prefs;
+
+// ================= CALIBRACIÓN DE MOTORES =================
+
+uint8_t pwmMaxConfigurado = PWM_MAX;
+uint8_t K_IZQ = 0;
+uint8_t K_DER = 0;
 
 uint8_t allowedController[6];
 
@@ -51,6 +62,8 @@ String connectedGamepad = "Ninguno";
 
 GamepadInfo gamepads[BP32_MAX_GAMEPADS];
 ControllerPtr myControllers[BP32_MAX_GAMEPADS];
+
+
 // ========================================================================
 // ============================== FUNCIONES ==============================
 // ========================================================================
@@ -85,18 +98,28 @@ void controlVelocidad(bool flecha_arr, bool flecha_abaj) {
 // =============== Función para detener los motores ===============
 void detenerMotores() {
 // Paso valor 0 de PWM a los motores:
-    ledcWrite(CH_ADELANTE_DER, 0);
-    ledcWrite(CH_ATRAS_DER, 0);
-    ledcWrite(CH_ADELANTE_IZQ, 0);
-    ledcWrite(CH_ATRAS_IZQ, 0);
+    escribirPWM(
+        0,  // adelante izquierda
+        0,  // atrás izquierda
+        0,  // adelante derecha
+        0   // atrás derecha
+    );
+
+    String sentidoIzq = "DETENIDO";
+    String sentidoDer = "DETENIDO";
 }
 
 // =============== Función para mover los motores con 255 ===============
 void maxima() {
-    ledcWrite(CH_ADELANTE_IZQ, 255);
-    ledcWrite(CH_ADELANTE_DER, 255);
-    ledcWrite(CH_ATRAS_IZQ, 0);
-    ledcWrite(CH_ATRAS_DER, 0);
+    escribirPWM(
+        255,  // adelante izquierda
+        0,  // atrás izquierda
+        255,  // adelante derecha
+        0   // atrás derecha
+    );
+
+    String sentidoIzq = "ADELANTE";
+    String sentidoDer = "ADELANTE";
 }
 
 // =============== Función para mover los motores ===============
@@ -135,19 +158,19 @@ void movimiento(ControllerPtr ctl) {
 
     // Detecto los sentidos y activo los motores correspondientes para el giro:
     if (pwmIzq >= 0) {
-        ledcWrite(CH_ADELANTE_IZQ, pwmIzq);
+        ledcWrite(CH_ADELANTE_IZQ, pwmIzq + K_IZQ);
         ledcWrite(CH_ATRAS_IZQ, 0);
     } else {
         ledcWrite(CH_ADELANTE_IZQ, 0);
-        ledcWrite(CH_ATRAS_IZQ, -pwmIzq);
+        ledcWrite(CH_ATRAS_IZQ, -pwmIzq + K_IZQ);
     }
 
     if (pwmDer >= 0) {
-        ledcWrite(CH_ADELANTE_DER, pwmDer);
+        ledcWrite(CH_ADELANTE_DER, pwmDer + K_DER);
         ledcWrite(CH_ATRAS_DER, 0);
     } else {
         ledcWrite(CH_ADELANTE_DER, 0);
-        ledcWrite(CH_ATRAS_DER, - pwmDer);
+        ledcWrite(CH_ATRAS_DER, - pwmDer + K_DER);
     }
 }
 
@@ -163,15 +186,15 @@ void iniciarAccessPoint() {
     //Bestia 2.0 192.168.10.1
     //Bella 192.168.11.1
 
-    IPAddress local_IP(192, 168, 9, 1);
-    IPAddress gateway(192, 168, 9, 1);
+    IPAddress local_IP(192, 168, 10, 1);
+    IPAddress gateway(192, 168, 10, 1);
     IPAddress subnet(255, 255, 255, 0);
 
     WiFi.softAPConfig(local_IP, gateway, subnet);
 
 
     bool ok = WiFi.softAP(
-        "Robot-Bestia1.0",
+        "Robot-Bestia2.0",
         "Fulbo123",
         1,
         false,
@@ -223,6 +246,65 @@ void controlarAccessPoint() {
 
     }
 }
+
+void cargarConfiguracionMotores() {
+
+    prefs.begin("config", true);
+
+    PWM_MAX = prefs.getUChar("pwmMax", 220);
+    K_IZQ = prefs.getUChar("kIzq", 0);
+    K_DER = prefs.getUChar("kDer", 0);
+    anguloGiro = prefs.getInt("anguloGiro", 180);
+
+    prefs.end();
+
+    Serial.println("===== CONFIGURACION MOTORES =====");
+    Serial.printf("PWM MAX: %d\n", PWM_MAX);
+    Serial.printf("K IZQ: %d\n", K_IZQ);
+    Serial.printf("K DER: %d\n", K_DER);
+}
+
+void guardarConfiguracionMotores() {
+
+    prefs.begin("config", false);
+
+    prefs.putUChar("pwmMax", PWM_MAX);
+    prefs.putUChar("kIzq", K_IZQ);
+    prefs.putUChar("kDer", K_DER);
+
+    // Guardar también el ángulo
+    prefs.putInt("anguloGiro", anguloGiro);
+
+    prefs.end();
+
+    Serial.println("Configuracion de motores guardada.");
+    Serial.print("PWM MAX: ");
+    Serial.println(PWM_MAX);
+    Serial.print("K IZQ: ");
+    Serial.println(K_IZQ);
+    Serial.print("K DER: ");
+    Serial.println(K_DER);
+    Serial.print("ANGULO GIRO: ");
+    Serial.println(anguloGiro);
+}
+
+void escribirPWM(
+    int adelanteIzq,
+    int atrasIzq,
+    int adelanteDer,
+    int atrasDer
+) {
+
+    pwmActualAdelanteIzq = adelanteIzq;
+    pwmActualAtrasIzq = atrasIzq;
+    pwmActualAdelanteDer = adelanteDer;
+    pwmActualAtrasDer = atrasDer;
+
+    ledcWrite(CH_ADELANTE_IZQ, adelanteIzq);
+    ledcWrite(CH_ATRAS_IZQ, atrasIzq);
+    ledcWrite(CH_ADELANTE_DER, adelanteDer);
+    ledcWrite(CH_ATRAS_DER, atrasDer);
+}
 // ========================================================================
 // ============================== SETUP ==============================
 // ========================================================================
@@ -230,6 +312,7 @@ void controlarAccessPoint() {
 void setup() {
   Serial.begin(115200);
 
+  cargarConfiguracionMotores();
 // Pines PWM
 // Configurar canales PWM:
     ledcSetup(CH_ADELANTE_DER, PWM_FREQ, PWM_RES);
@@ -301,6 +384,41 @@ void setup() {
     <title>Robot Futbolero</title>
 
     <style>
+    .config-item select{
+        width:100%;
+        box-sizing:border-box;
+        border:none;
+        border-radius:14px;
+        padding:14px;
+        font-size:18px;
+        background:#1c1f26;
+        color:white;
+        outline:none;
+    }
+
+    .config-item select:focus{
+        box-shadow:0 0 0 2px #00d4ff;
+    }
+
+    .giro-botones{
+        display:flex;
+        gap:10px;
+        margin-top:10px;
+    }
+
+    .giro-botones button{
+        width:50%;
+    }
+
+    .giro-izq{
+        background:#7c4dff;
+        color:white;
+    }
+
+    .giro-der{
+        background:#00bfa5;
+        color:white;
+    }
 
     body{
         margin:0;
@@ -386,6 +504,67 @@ void setup() {
         background:#2979ff;
         color:white;
     }
+    .config-title{
+    margin-top:30px;
+    margin-bottom:10px;
+    font-size:22px;
+    }
+
+    .config-item{
+        margin-top:18px;
+    }
+
+    .config-item label{
+        display:block;
+        margin-bottom:8px;
+        font-size:16px;
+        color:#b0bec5;
+    }
+
+    .config-item input{
+        width:100%;
+        box-sizing:border-box;
+        border:none;
+        border-radius:14px;
+        padding:14px;
+        font-size:18px;
+        background:#1c1f26;
+        color:white;
+        outline:none;
+    }
+
+    .config-item input:focus{
+        box-shadow:0 0 0 2px #00d4ff;
+    }
+
+    .save{
+        background:#00c853;
+        color:white;
+    }
+
+    .motor{
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+        margin-top:12px;
+    }
+
+    .motor-value{
+        font-size:20px;
+        font-weight:bold;
+        color:#00d4ff;
+    }
+
+    .motor-direction{
+        font-size:15px;
+        color:#b0bec5;
+    }
+
+    .message{
+        text-align:center;
+        margin-top:15px;
+        color:#00d4ff;
+    }
 
     .footer{
         text-align:center;
@@ -450,10 +629,10 @@ html += R"rawliteral(
             html += "</div>";
         }
     }
+    
 
 html += R"rawliteral(
-
-    <button class="clear"
+ <button class="clear"
     onclick="fetch('/clear').then(()=>location.reload())">
 
     Borrar whitelist
@@ -466,6 +645,84 @@ html += R"rawliteral(
     Actualizar
 
     </button>
+    
+<div class="status">
+
+<h2>Configuracion de giro</h2>
+
+    <div class="config-item">
+
+        <label>Angulo de giro</label>
+
+        <select id="anguloGiro">
+
+            <option value="45">45</option>
+            <option value="90">90</option>
+            <option value="180" selected>180</option>
+            <option value="270">270</option>
+            <option value="360">360</option>
+
+        </select>
+
+    </div>
+
+    <div class="giro-botones">
+
+        <button class="giro-izq"
+            onclick="girar('izquierda')">
+            Girar izquierda
+        </button>
+
+        <button class="giro-der"
+            onclick="girar('derecha')">
+            Girar derecha
+        </button>
+
+    </div>
+
+    <div id="mensajeGiro" class="message"></div>
+
+<h2>Calibracion de motores</h2>
+
+    <div class="config-item">
+        <label>PWM maximo</label>
+        <input
+            type="number"
+            id="pwmMax"
+            min="0"
+            max="255"
+            value="220">
+    </div>
+
+    <div class="config-item">
+        <label>K izquierdo</label>
+        <input
+            type="number"
+            id="kIzq"
+            min="0"
+            max="255"
+            value="0">
+    </div>
+
+    <div class="config-item">
+        <label>K derecho</label>
+        <input
+            type="number"
+            id="kDer"
+            min="0"
+            max="255"
+            value="0">
+    </div>
+
+    <button
+        class="save"
+        onclick="guardarMotores()">
+        Guardar configuración
+    </button>
+
+    <div id="mensajeConfig" class="message"></div>
+
+</div>
 
     <div class="footer">
 
@@ -476,6 +733,114 @@ html += R"rawliteral(
     </div>
 
     </div>
+
+    <script>
+    function girar(direccion){
+
+    const angulo =
+        document.getElementById("anguloGiro").value;
+
+    const url =
+        "/girar" +
+        "?direccion=" + direccion +
+        "&angulo=" + angulo;
+
+    fetch(url)
+
+    .then(response => response.text())
+
+    .then(data => {
+
+        document.getElementById("mensajeGiro").innerText =
+            "✓ " + data;
+
+    })
+
+    .catch(error => {
+
+        document.getElementById("mensajeGiro").innerText =
+            "✗ Error al realizar el giro";
+
+        console.log(error);
+
+    });
+}
+
+    function cargarConfiguracion(){
+
+        fetch('/config')
+
+        .then(response => response.json())
+
+        .then(data => {
+
+            document.getElementById("pwmMax").value = data.pwmMax;
+            document.getElementById("kIzq").value = data.kIzq;
+            document.getElementById("kDer").value = data.kDer;
+            document.getElementById("anguloGiro").value = data.anguloGiro;
+
+        })
+
+        .catch(error => {
+
+            console.log("Error cargando configuración:", error);
+
+        });
+    }
+
+function guardarMotores(){
+
+    const pwmMax =
+        document.getElementById("pwmMax").value;
+
+    const kIzq =
+        document.getElementById("kIzq").value;
+
+    const kDer =
+        document.getElementById("kDer").value;
+
+    const anguloGiro =
+        document.getElementById("anguloGiro").value;
+
+
+    const url =
+        "/guardar" +
+        "?pwmMax=" + pwmMax +
+        "&kIzq=" + kIzq +
+        "&kDer=" + kDer +
+        "&anguloGiro=" + anguloGiro;
+
+
+    fetch(url)
+
+    .then(response => response.text())
+
+    .then(data => {
+
+        document.getElementById("mensajeConfig").innerText =
+            "✓ Configuración guardada";
+
+    })
+
+    .catch(error => {
+
+        document.getElementById("mensajeConfig").innerText =
+            "✗ Error al guardar";
+
+        console.log(error);
+
+    });
+
+}
+
+
+    window.onload = function(){
+
+        cargarConfiguracion();
+
+    };
+
+    </script>
 
     </body>
     </html>
@@ -557,6 +922,99 @@ server.on("/disconnect", [](){
     server.send(400, "text/plain", "Error");
 });
 
+server.on("/config", HTTP_GET, []() {
+
+    String json = "{";
+
+    json += "\"pwmMax\":" + String(PWM_MAX);
+    json += ",\"kIzq\":" + String(K_IZQ);
+    json += ",\"kDer\":" + String(K_DER);
+    json += ",\"anguloGiro\":" + String(anguloGiro);
+
+    json += "}";
+
+    server.send(200, "application/json", json);
+});
+
+server.on("/guardar", HTTP_GET, []() {
+
+    if (server.hasArg("pwmMax"))
+        PWM_MAX = server.arg("pwmMax").toInt();
+
+    if (server.hasArg("kIzq"))
+        K_IZQ = server.arg("kIzq").toInt();
+
+    if (server.hasArg("kDer"))
+        K_DER = server.arg("kDer").toInt();
+
+if (server.hasArg("anguloGiro"))
+    anguloGiro = server.arg("anguloGiro").toInt();
+
+    guardarConfiguracionMotores();
+    server.send(200, "text/plain", "Configuración guardada");
+});
+
+server.on("/girar", HTTP_GET, []() {
+
+    if (!server.hasArg("direccion") || !server.hasArg("angulo")) {
+
+        server.send(400, "text/plain", "Faltan parametros");
+        return;
+    }
+
+    String direccion = server.arg("direccion");
+
+    int grados = server.arg("angulo").toInt();
+
+    if (grados != 45 &&
+        grados != 90 &&
+        grados != 180 &&
+        grados != 270 &&
+        grados != 360) {
+
+        server.send(400, "text/plain", "Angulo no permitido");
+        return;
+    }
+
+
+    Serial.print("Giro solicitado: ");
+    Serial.print(direccion);
+    Serial.print(" ");
+    Serial.print(anguloGiro);
+    Serial.println(" grados");
+
+
+    if (direccion == "izquierda") {
+
+        giroIzquierda(grados);
+
+        server.send(
+            200,
+            "text/plain",
+            "Giro izquierda " + String(anguloGiro) + " grados"
+        );
+
+        return;
+    }
+
+
+    if (direccion == "derecha") {
+
+        giroDerecha(grados);
+
+        server.send(
+            200,
+            "text/plain",
+            "Giro derecha " + String(anguloGiro) + " grados"
+        );
+
+        return;
+    }
+
+
+    server.send(400, "text/plain", "Direccion no valida");
+});
+
     server.begin();
     Serial.println("Servidor web iniciado");
 
@@ -632,13 +1090,13 @@ void loop() {
 
             static unsigned long ultimoIzquierda = 0;
             if (ctl->brake() && millis() - ultimoIzquierda > tiempoRebote) {
-                giro180Izquierda();
+                giroIzquierda(anguloGiro);
                 ultimoIzquierda = millis();
             }
             
             static unsigned long ultimoDerecha = 0;
             if (ctl->throttle() && millis() - ultimoDerecha > tiempoRebote) {
-                giro180Derecha();
+                giroDerecha(anguloGiro);
                 ultimoDerecha = millis();
             }
 

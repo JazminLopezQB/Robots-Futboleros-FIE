@@ -14,5 +14,17 @@ int tiempoCarga = 300;
 int tiempoGolpe = 300;
 const unsigned long tiempoRebote = 200;
 
-uint8_t K = 0;
+// Ángulo seleccionado para los giros desde la web
+int anguloGiro = 180;
 
+// ================= PWM ACTUAL DE LOS MOTORES =================
+
+int pwmActualAdelanteIzq = 0;
+int pwmActualAtrasIzq = 0;
+int pwmActualAdelanteDer = 0;
+int pwmActualAtrasDer = 0;
+
+String sentidoIzq = "DETENIDO";
+String sentidoDer = "DETENIDO";
+
+uint8_t PWM_MAX = 220;
