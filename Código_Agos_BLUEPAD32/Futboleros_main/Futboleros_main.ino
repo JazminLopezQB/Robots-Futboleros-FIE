@@ -135,11 +135,11 @@ void movimiento(ControllerPtr ctl) {
 
     // Detecto los sentidos y activo los motores correspondientes para el giro:
     if (pwmIzq >= 0) {
-        ledcWrite(CH_ADELANTE_IZQ, pwmIzq + K);
+        ledcWrite(CH_ADELANTE_IZQ, pwmIzq);
         ledcWrite(CH_ATRAS_IZQ, 0);
     } else {
         ledcWrite(CH_ADELANTE_IZQ, 0);
-        ledcWrite(CH_ATRAS_IZQ, -pwmIzq + K);
+        ledcWrite(CH_ATRAS_IZQ, -pwmIzq);
     }
 
     if (pwmDer >= 0) {
@@ -163,15 +163,15 @@ void iniciarAccessPoint() {
     //Bestia 2.0 192.168.10.1
     //Bella 192.168.11.1
 
-    IPAddress local_IP(192, 168, 11, 1);
-    IPAddress gateway(192, 168, 11, 1);
+    IPAddress local_IP(192, 168, 9, 1);
+    IPAddress gateway(192, 168, 9, 1);
     IPAddress subnet(255, 255, 255, 0);
 
     WiFi.softAPConfig(local_IP, gateway, subnet);
 
 
     bool ok = WiFi.softAP(
-        "Robot-Bella",
+        "Robot-Bestia1.0",
         "Fulbo123",
         1,
         false,

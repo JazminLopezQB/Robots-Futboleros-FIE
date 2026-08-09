@@ -56,7 +56,7 @@ void atras() {
 // En los viejos y la bestia 1.0 funcion izq y der al reves
 
 // Izquierda con círculo
-void izquierda() {
+void derecha() {
   switch(nivelActual){
     case 0:
       ledcWrite(CH_ADELANTE_IZQ, 180);
@@ -81,7 +81,7 @@ void izquierda() {
 }
 
 // Derecha con cuadrado
-void derecha() {
+void izquierda() {
   switch(nivelActual){
     case 0:
       ledcWrite(CH_ADELANTE_DER, 180); // + K);

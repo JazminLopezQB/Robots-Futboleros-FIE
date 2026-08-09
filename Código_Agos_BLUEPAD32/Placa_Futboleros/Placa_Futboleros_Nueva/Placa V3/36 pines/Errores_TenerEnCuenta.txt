@@ -1,0 +1,7 @@
+Tener en cuenta los siguientes errores de diseño:
+1. Chequear el ams 1117 que sea de 5V.
+2. Esos 5V de alimentación de la ESP van a 5V Vin y no a ENABLE.
+3. A ENABLE va en relaidad los 3V3 de la salida de la ESP32.
+
+*****************
+- Chequear siempre al soldar el movimiento de los motores.
