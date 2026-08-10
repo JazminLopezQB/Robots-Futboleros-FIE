@@ -36,20 +36,6 @@
 
 ---
 ---
-# Índice Importante:
-**Links:**
-- [[#^43a2ae|Links útiles]]
-
-**Tips e Info:**
-- [[#^23ebe2|Placa V3 usada en la Bestia 2.0 y la Bella]]
-- [[#^925762|Comentarios y Cambios por futbolero en el Código]]
-- [[#^1c89af|Funciones de la Página WEB]]
-- [[#^0a90d6|Manejo del ROBOT]]
-- [[#^6af2b9|Baterías]]
-- [[#^a27400|Conexión del mando]]
-- [[#^53dff0|Requerimientos para cargar el código]]
-***
-***
 ## Bluepad32 ESP32
 
 **Links Útiles:** ^43a2ae
@@ -70,7 +56,7 @@
 ***
 ## TIPS e INFO:
 
-**Placa V3 usada en la Bestia 2.0 y la Bella:** ^23ebe2
+**Placa V3 usada en la Bestia 2.0 y la Bella:** 
 > La placa posee diversos arreglos, entre ellos posee la conexión por puente del ENABLE con 3v3; y otro puente que va del regulador de 5V a Vin, además, el regulador se cambió ya que el conseguido fue de 3v3 por error y se consiguió uno de inserción a ultimo momento de pinaje distinto al SMD. 
 
 > [!Important] La ESP es de 36 pines por confusión, lo que cambia el pinaje del código. 
@@ -103,7 +89,7 @@
 **Funciones de la Página WEB:** ^1c89af
 > Permite visualizar y autorizar la conexión de mandos de forma remota, y uno a la vez; como así el cambio de variables como el ángulo de giro, PWM y constantes de ajuste de los motores durante los dos minutos que se crea el access point tra prender la ESP32.
 
-**Manejo del ROBOT:** ^0a90d6
+**Manejo del ROBOT:** 
 
 | Botón                  | Función                              |
 | ---------------------- | ------------------------------------ |
@@ -117,7 +103,7 @@
 | Menú (+)               | Prende el AP para calibrar variables |
 | Select (-)             | Apaga el AP para calibrar variables  |
 
-**Baterías:** ^6af2b9
+**Baterías:** 
 > Se observó que las mismas ofrecían duración de 2 partidas contra robots de poca potencia; sin embargo para la batalla contra robots del estilo de PhobosyDeimos baterías con 2 o 3 partidas ya eran insuficientes para empujar la potencia de los robots. 
 
 > [!Check] Mejora con las Baterías:
@@ -126,7 +112,7 @@
 > 	- Evitar homologación constante por desconexión de mando.
 > 	- Fácil acceso para cargar baterías o recambio de las pilas. 
 
-**Conexión del mando:** ^a27400
+**Conexión del mando:** 
 1. Prender el robot con la ESP32. 
 2. Abrir desde el dispositivo deseado la conexión WIFI y seleccionar aquel cuyo SSID sea el del robot correspondiente. 
 3. Establecida la conexión del Access Point (que dura 2minutos), ingresar a la IP del robot.
@@ -136,7 +122,7 @@
 
 > [!Info] Para mandos específicos chequear el link de compatibilidad y conexión. 
 
-**Requerimientos para cargar el código:** ^53dff0
+**Requerimientos para cargar el código:** 
 1. Instalar Arduino IDE V2. 
 2. Abrir uno de los archivos del código dentro de la misma carpeta ya que de esa manera se compilan juntos y se abren en distintas pestañas.
 3. Descargar la placa en Boards de *esp32_bluepad32 by Ricardo Quesada* - V4.1.0.
