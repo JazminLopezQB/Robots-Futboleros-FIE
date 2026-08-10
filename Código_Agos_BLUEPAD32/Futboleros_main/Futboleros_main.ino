@@ -207,7 +207,7 @@ void iniciarAccessPoint(bool temporal) {
 
 
     bool ok = WiFi.softAP(
-        "Robot-Bestia2.0",
+        "Robot-Bella",
         "Fulbo123",
         1,
         false,
