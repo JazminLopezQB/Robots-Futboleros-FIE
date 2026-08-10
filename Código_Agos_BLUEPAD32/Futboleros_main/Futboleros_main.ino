@@ -26,6 +26,7 @@ void giroDerecha(int grados);
 bool apActivo = false;
 unsigned long inicioAP = 0;
 const unsigned long DURACION_AP = 120000; // 2 minutos
+bool botonMenuAnterior = false;
 
 // Variables Globales para Web
 WebServer server(80);
@@ -227,13 +228,14 @@ void apagarAccessPoint() {
     Serial.println("2 minutos cumplidos.");
     Serial.println("Apagando Access Point...");
 
-    WiFi.softAPdisconnect(true);
-
-    WiFi.mode(WIFI_OFF);
+    // Apaga solamente el Access Point.
+    // NO apagamos Bluetooth.
+    WiFi.softAPdisconnect(false);
 
     apActivo = false;
 
     Serial.println("Access Point apagado.");
+    Serial.println("Bluetooth permanece activo.");
 }
 
 void controlarAccessPoint() {
@@ -1051,6 +1053,23 @@ void loop() {
         // 🔥 CAMBIO CLAVE: bloqueo si no está autorizado
         if (!isControllerAllowed(ctl))
             continue;            
+
+        // ================= CONTROL DEL ACCESS POINT =================
+
+        bool botonMenu = ctl->miscStart();
+
+        if (botonMenu && !botonMenuAnterior) {
+
+            //Serial.println("================================");
+            //Serial.println("BOTON MENU DETECTADO");
+            //Serial.println("Encendiendo Access Point...");
+            //Serial.println("================================");
+
+            iniciarAccessPoint();
+        }
+
+        botonMenuAnterior = botonMenu;
+
             // Booleano para detectar si se detectó los botones para subir y bajar la velocidad
             // sabiendo también si antes se presionó o no para que no haya efecto rebote.
             static bool prevY = false;
