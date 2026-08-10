@@ -24,9 +24,17 @@ void giroDerecha(int grados);
 //
 
 bool apActivo = false;
+
+// Indica que el AP fue encendido automáticamente al arrancar
+bool apTemporal = false;
+
 unsigned long inicioAP = 0;
+
 const unsigned long DURACION_AP = 120000; // 2 minutos
-bool botonMenuAnterior = false;
+
+// Estados anteriores de los botones
+bool botonStartAnterior = false;
+bool botonSelectAnterior = false;
 
 // Variables Globales para Web
 WebServer server(80);
@@ -175,7 +183,11 @@ void movimiento(ControllerPtr ctl) {
     }
 }
 
-void iniciarAccessPoint() {
+void iniciarAccessPoint(bool temporal) {
+
+    // Si ya está encendido, no hacemos nada
+    if (apActivo)
+        return;
 
     WiFi.mode(WIFI_AP);
 
@@ -183,12 +195,12 @@ void iniciarAccessPoint() {
     // No usamos WiFi.setSleep(false)
     // porque queremos reducir consumo.
 
-    //Bestia 1.0 192.168.9.1
-    //Bestia 2.0 192.168.10.1
-    //Bella 192.168.11.1
+    //Bestia 1.0 192.168.23.1
+    //Bestia 2.0 192.168.24.1
+    //Bella 192.168.25.1
 
-    IPAddress local_IP(192, 168, 10, 1);
-    IPAddress gateway(192, 168, 10, 1);
+    IPAddress local_IP(192, 168, 24, 1);
+    IPAddress gateway(192, 168, 24, 1);
     IPAddress subnet(255, 255, 255, 0);
 
     WiFi.softAPConfig(local_IP, gateway, subnet);
@@ -205,17 +217,22 @@ void iniciarAccessPoint() {
     if (ok) {
 
         apActivo = true;
+        apTemporal = temporal;
         inicioAP = millis();
 
-        Serial.println("========== WIFI AP ==========");
-        Serial.println("AP iniciado");
-        Serial.print("IP: ");
-        Serial.println(WiFi.softAPIP());
+        //Serial.println("========== WIFI AP ==========");
+        //Serial.println("AP iniciado");
+        //Serial.print("IP: ");
+        //Serial.println(WiFi.softAPIP());
+
+        if (apTemporal) {
+            Serial.println("Modo temporal: 2 minutos");
+        } else {
+            Serial.println("Modo manual: sin limite de tiempo");
+        }
 
     } else {
-
         Serial.println("ERROR AL INICIAR AP");
-
     }
 }
 
@@ -224,28 +241,35 @@ void apagarAccessPoint() {
     if (!apActivo)
         return;
 
-    Serial.println("========== WIFI AP ==========");
-    Serial.println("2 minutos cumplidos.");
-    Serial.println("Apagando Access Point...");
+    //Serial.println("========== WIFI AP ==========");
+    //Serial.println("Apagando Access Point...");
 
     // Apaga solamente el Access Point.
     // NO apagamos Bluetooth.
     WiFi.softAPdisconnect(false);
 
     apActivo = false;
+    apTemporal = false;
 
-    Serial.println("Access Point apagado.");
-    Serial.println("Bluetooth permanece activo.");
+    //Serial.println("Access Point apagado.");
+    //Serial.println("Bluetooth permanece activo.");
 }
 
 void controlarAccessPoint() {
+
     if (!apActivo)
         return;
 
+    // Si fue iniciado manualmente con START,
+    // no tiene tiempo límite.
+    if (!apTemporal)
+        return;
+
+    // Si fue iniciado automáticamente al arrancar,
+    // dura solamente 2 minutos.
     if (millis() - inicioAP >= DURACION_AP) {
-
+        //Serial.println("2 minutos cumplidos.");
         apagarAccessPoint();
-
     }
 }
 
@@ -336,8 +360,7 @@ void setup() {
     //Serial.printf("BD Addr: %2X:%2X:%2X:%2X:%2X:%2X\n", addr[0], addr[1], addr[2], addr[3], addr[4], addr[5]);
 
     // ====================== WIFI AP ==========================
-    iniciarAccessPoint();
-
+    iniciarAccessPoint(true);
 
     // =================== CARGAR WHITELIST ====================
 
@@ -1055,20 +1078,27 @@ void loop() {
             continue;            
 
         // ================= CONTROL DEL ACCESS POINT =================
+        // ================= CONTROL MANUAL DEL AP =================
 
-        bool botonMenu = ctl->miscStart();
+        // START → encender AP permanentemente
+        bool botonStart = ctl->miscStart();
 
-        if (botonMenu && !botonMenuAnterior) {
-
-            //Serial.println("================================");
-            //Serial.println("BOTON MENU DETECTADO");
-            //Serial.println("Encendiendo Access Point...");
-            //Serial.println("================================");
-
-            iniciarAccessPoint();
+        if (botonStart && !botonStartAnterior) {
+            //Serial.println("START -> Encendiendo AP");
+            iniciarAccessPoint(false);
         }
 
-        botonMenuAnterior = botonMenu;
+        botonStartAnterior = botonStart;
+
+        // SELECT → apagar AP
+        bool botonSelect = ctl->miscSelect();
+
+        if (botonSelect && !botonSelectAnterior) {
+            //Serial.println("SELECT -> Apagando AP");
+            apagarAccessPoint();
+        }
+
+        botonSelectAnterior = botonSelect;
 
             // Booleano para detectar si se detectó los botones para subir y bajar la velocidad
             // sabiendo también si antes se presionó o no para que no haya efecto rebote.

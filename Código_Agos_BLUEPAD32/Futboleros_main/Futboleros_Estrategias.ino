@@ -9,7 +9,7 @@ void giroIzquierda(int grados) {
     ledcWrite(CH_ATRAS_IZQ, 0);
 
     // Motor derecho hacia adelante
-    ledcWrite(CH_ADELANTE_DER, PWM_MAX);
+    ledcWrite(CH_ADELANTE_DER, 255);
     ledcWrite(CH_ATRAS_DER, 0);
 
     // Tiempo proporcional al ángulo
@@ -33,7 +33,7 @@ void giroDerecha(int grados) {
     ledcWrite(CH_ATRAS_DER, 0);
 
     // Motor izquierdo hacia adelante
-    ledcWrite(CH_ADELANTE_IZQ, PWM_MAX);
+    ledcWrite(CH_ADELANTE_IZQ, 255);
     ledcWrite(CH_ATRAS_IZQ, 0);
 
     // Tiempo proporcional al ángulo
