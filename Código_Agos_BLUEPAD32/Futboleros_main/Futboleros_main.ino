@@ -18,6 +18,7 @@ void apagarAccessPoint();
 void controlarAccessPoint();
 void cargarConfiguracionMotores();
 void escribirPWM();
+void movimiento(ControllerPtr ctl, bool turbo);
 
 void giroIzquierda(int grados);
 void giroDerecha(int grados);
@@ -132,55 +133,177 @@ void maxima() {
 }
 
 // =============== Función para mover los motores ===============
-void movimiento(ControllerPtr ctl) {
+void movimiento(ControllerPtr ctl, bool turbo) {
 
     float x = ctl->axisRX();
     float y = -ctl->axisRY();
 
-    // Serial.printf("X:%d Y:%d\n", x, y);
+    // ==========================================
+    // TURBO
+    // ==========================================
 
-    // Zona muerta
-    // Sin movimiento
+    if (turbo) {
+
+        // ------------------------------------------
+        // R1 mantiene SIEMPRE el avance hacia adelante
+        // ------------------------------------------
+
+        // Velocidad base del turbo
+        float avance = 255.0;
+
+        // ------------------------------------------
+        // La palanca solamente controla el giro
+        // ------------------------------------------
+
+        float giro = x / 512.0;
+
+        // Reducimos la influencia de la palanca
+        // para que solamente haga una corrección suave.
+        giro *= 100.0;
+
+        // Limitar corrección
+        giro = constrain(giro, -100.0, 100.0);
+
+
+        // ------------------------------------------
+        // Mezcla:
+        //
+        // palanca izquierda  -> izquierda más lento
+        // palanca derecha    -> derecha más lento
+        // palanca centrada   -> ambos 255
+        // ------------------------------------------
+
+        float pwmIzq = avance + giro;
+        float pwmDer = avance - giro;
+
+
+        // Limitar a 0-255
+        pwmIzq = constrain(pwmIzq, 0, 255);
+        pwmDer = constrain(pwmDer, 0, 255);
+
+
+        // ------------------------------------------
+        // Turbo siempre hacia adelante
+        // ------------------------------------------
+
+        int adelanteIzq =
+            constrain((int)pwmIzq + K_IZQ, 0, 255);
+
+        int adelanteDer =
+            constrain((int)pwmDer + K_DER, 0, 255);
+
+
+        escribirPWM(
+            adelanteIzq,
+            0,
+            adelanteDer,
+            0
+        );
+
+        return;
+    }
+
+
+    // ==========================================
+    // MOVIMIENTO NORMAL
+    // ==========================================
+
     if (abs(x) < ZONA_DRIFT && abs(y) < ZONA_DRIFT) {
+
         detenerMotores();
         return;
     }
 
-    // Normalización: para pasar a magnitud unitaria
+
     float normX = x / 512.0;
     float normY = y / 512.0;
 
-    // == Mezcla diferencial simple ==
-    // * Lógica de funcionamiento: el controlador suma y resta los valores de ambos ejes según los motores (y a su vez se multiplica
-    // por los valores de velocidad y constante para el PWM).
-    // * Casos con ejemplo externo:
-    //      1. Avanzar línea recta: si Y = +100 y X = 0; ambos motores reciben +100.
-    //      2. Avanzar y girar a la derecha: si Y = +100 y X = +50; motor izquierdo recibe +150 y el derecho +50 (La rueda izquierda gira más rápido, provocando un giro hacia la derecha).
-    //      3. Girar en el lugar sobre el eje: si Y = 0 y X = +100; el motor izquierdo recibe +100 y el derecho -100 (Las ruedas giran en sentidos opuestos, rotando el vehículo en el lugar).
 
-    float pwmIzq = (normY + normX) * 127.0 * factorVelocidad; // -Bestia1.0 //otros al reves
-    float pwmDer = (normY - normX) * 127.0 * factorVelocidad; // +Bestia1.0 //otros al reves
+    // Mezcla diferencial normal
 
-    // Se limita el PWM de los motores con los valores predefinidos en 'config.h'
-    pwmIzq = constrain(pwmIzq, -PWM_MAX, PWM_MAX);
-    pwmDer = constrain(pwmDer, -PWM_MAX, PWM_MAX);
+    float pwmIzq =
+        (normY + normX) * 127.0 * factorVelocidad;
 
-    // Detecto los sentidos y activo los motores correspondientes para el giro:
+    float pwmDer =
+        (normY - normX) * 127.0 * factorVelocidad;
+
+
+    // Movimiento normal respeta PWM_MAX
+
+    pwmIzq = constrain(
+        pwmIzq,
+        -PWM_MAX,
+        PWM_MAX
+    );
+
+    pwmDer = constrain(
+        pwmDer,
+        -PWM_MAX,
+        PWM_MAX
+    );
+
+
+    // ==========================================
+    // MOTOR IZQUIERDO
+    // ==========================================
+
+    int adelanteIzq = 0;
+    int atrasIzq = 0;
+
+    int adelanteDer = 0;
+    int atrasDer = 0;
+
+
     if (pwmIzq >= 0) {
-        ledcWrite(CH_ADELANTE_IZQ, pwmIzq + K_IZQ);
-        ledcWrite(CH_ATRAS_IZQ, 0);
+
+        adelanteIzq =
+            constrain(
+                (int)pwmIzq + K_IZQ,
+                0,
+                255
+            );
+
     } else {
-        ledcWrite(CH_ADELANTE_IZQ, 0);
-        ledcWrite(CH_ATRAS_IZQ, -pwmIzq + K_IZQ);
+
+        atrasIzq =
+            constrain(
+                (int)(-pwmIzq) + K_IZQ,
+                0,
+                255
+            );
     }
+
+
+    // ==========================================
+    // MOTOR DERECHO
+    // ==========================================
 
     if (pwmDer >= 0) {
-        ledcWrite(CH_ADELANTE_DER, pwmDer + K_DER);
-        ledcWrite(CH_ATRAS_DER, 0);
+
+        adelanteDer =
+            constrain(
+                (int)pwmDer + K_DER,
+                0,
+                255
+            );
+
     } else {
-        ledcWrite(CH_ADELANTE_DER, 0);
-        ledcWrite(CH_ATRAS_DER, - pwmDer + K_DER);
+
+        atrasDer =
+            constrain(
+                (int)(-pwmDer) + K_DER,
+                0,
+                255
+            );
     }
+
+
+    escribirPWM(
+        adelanteIzq,
+        atrasIzq,
+        adelanteDer,
+        atrasDer
+    );
 }
 
 void iniciarAccessPoint(bool temporal) {
@@ -207,7 +330,7 @@ void iniciarAccessPoint(bool temporal) {
 
 
     bool ok = WiFi.softAP(
-        "Robot-Bella",
+        "Robot-Bestia2.0",
         "Fulbo123",
         1,
         false,
@@ -1153,14 +1276,9 @@ void loop() {
             bool turbo = ctl->r1();
     
             //Serial.printf("Botones: %2X:%2X:%2X\n", ctl->brake(), ctl->throttle(), ctl->r1());
-
-            if (turbo) {
-                ledcWrite(CH_ADELANTE_IZQ, 255);
-                ledcWrite(CH_ADELANTE_DER, 255);
-                ledcWrite(CH_ATRAS_IZQ, 0);
-                ledcWrite(CH_ATRAS_DER, 0);
-            } else if (!botonMovimiento) {
-                movimiento(ctl);
+            
+            if (!botonMovimiento) { 
+                movimiento(ctl, turbo); 
             }
         }
 
