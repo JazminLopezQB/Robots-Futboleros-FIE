@@ -8,17 +8,17 @@
 #define ZONA_DRIFT 10 // Cambiar valor según ajuste y joystick.
 
 // Pines de los motores (NO CAMBIAR) =======
-#define Atras_Izq 25
-#define Adelante_Izq 26
-#define Atras_Der 14
-#define Adelante_Der 12
+#define Atras_Izq 26
+#define Adelante_Izq 25
+#define Atras_Der 21
+#define Adelante_Der 18
 
 // Bestia 2.0 - 25 26 14 12
 // Bella 26 25 12 14
 // Bestia tranqui 25 26 18 21
 
 
-#define PIN_LED 2 //13
+#define PIN_LED 13 //2
 
 // Ajustes de PWM ==========================
 #define PWM_FREQ 20000

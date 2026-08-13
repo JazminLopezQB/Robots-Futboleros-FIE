@@ -20,6 +20,8 @@ void cargarConfiguracionMotores();
 void escribirPWM();
 void movimiento(ControllerPtr ctl, bool turbo);
 
+void leerBateria();
+String obtenerHistorialJSON();
 void giroIzquierda(int grados);
 void giroDerecha(int grados);
 //
@@ -36,6 +38,35 @@ const unsigned long DURACION_AP = 120000; // 2 minutos
 // Estados anteriores de los botones
 bool botonStartAnterior = false;
 bool botonSelectAnterior = false;
+
+// ================= BATERÍA / ADC =================
+
+#define PIN_BATERIA 32
+
+// Divisor:
+// Batería --- 2.7k --- ADC --- 1.5k --- GND
+
+#define RESISTENCIA_SUPERIOR 2700.0
+#define RESISTENCIA_INFERIOR 1500.0
+
+float voltajeBateria = 0.0;
+float voltajeADC = 0.0;
+
+unsigned long ultimaLecturaBateria = 0;
+const unsigned long INTERVALO_BATERIA = 1000; // 1 segundo
+
+
+// ================= HISTORIAL =================
+
+#define MAX_HISTORIAL 300
+
+float historialVoltaje[MAX_HISTORIAL];
+unsigned long historialTiempo[MAX_HISTORIAL];
+
+int indiceHistorial = 0;
+int cantidadHistorial = 0;
+
+unsigned long inicioHistorial = 0;
 
 // Variables Globales para Web
 WebServer server(80);
@@ -77,6 +108,90 @@ ControllerPtr myControllers[BP32_MAX_GAMEPADS];
 // ========================================================================
 // ============================== FUNCIONES ==============================
 // ========================================================================
+// ==========================================================
+// ================== LEER BATERÍA ==========================
+// ==========================================================
+
+void leerBateria() {
+
+    int adc = analogRead(PIN_BATERIA);
+
+    // Convertir ADC a tensión en el pin del ESP32
+    voltajeADC = (adc / 4095.0) * 3.3;
+
+    // Recuperar tensión real de batería
+    voltajeBateria =
+        voltajeADC *
+        ((RESISTENCIA_SUPERIOR + RESISTENCIA_INFERIOR) /
+         RESISTENCIA_INFERIOR);
+
+    // Guardar en historial
+    unsigned long tiempo = millis() - inicioHistorial;
+
+    historialVoltaje[indiceHistorial] = voltajeBateria;
+    historialTiempo[indiceHistorial] = tiempo;
+
+    indiceHistorial++;
+
+    if (indiceHistorial >= MAX_HISTORIAL) {
+        indiceHistorial = 0;
+    }
+
+    if (cantidadHistorial < MAX_HISTORIAL) {
+        cantidadHistorial++;
+    }
+
+    Serial.print("Bateria: ");
+    Serial.print(voltajeBateria, 2);
+    Serial.print(" V | ADC: ");
+    Serial.print(adc);
+    Serial.print(" | ADC V: ");
+    Serial.println(voltajeADC, 3);
+}
+
+
+// ==========================================================
+// ================= HISTORIAL JSON =========================
+// ==========================================================
+
+String obtenerHistorialJSON() {
+
+    String json = "[";
+
+    int inicio;
+
+    if (cantidadHistorial < MAX_HISTORIAL) {
+        inicio = 0;
+    } else {
+        inicio = indiceHistorial;
+    }
+
+    for (int i = 0; i < cantidadHistorial; i++) {
+
+        int posicion =
+            (inicio + i) % MAX_HISTORIAL;
+
+        json += "{";
+
+        json += "\"t\":";
+        json += String(historialTiempo[posicion] / 1000.0, 1);
+
+        json += ",";
+
+        json += "\"v\":";
+        json += String(historialVoltaje[posicion], 2);
+
+        json += "}";
+
+        if (i < cantidadHistorial - 1) {
+            json += ",";
+        }
+    }
+
+    json += "]";
+
+    return json;
+}
 
 // =============== Función para ajustar nivel de velocidad con flechas ===============
 unsigned long tiempoUltimoCambio = 0;
@@ -322,15 +437,15 @@ void iniciarAccessPoint(bool temporal) {
     //Bestia 2.0 192.168.24.1
     //Bella 192.168.25.1
 
-    IPAddress local_IP(192, 168, 24, 1);
-    IPAddress gateway(192, 168, 24, 1);
+    IPAddress local_IP(192, 168, 25, 1);
+    IPAddress gateway(192, 168, 25, 1);
     IPAddress subnet(255, 255, 255, 0);
 
     WiFi.softAPConfig(local_IP, gateway, subnet);
 
 
     bool ok = WiFi.softAP(
-        "Robot-Bestia2.0",
+        "Robot-Bella",
         "Fulbo123",
         1,
         false,
@@ -460,6 +575,19 @@ void escribirPWM(
 
 void setup() {
   Serial.begin(115200);
+
+    // ================= ADC BATERÍA =================
+
+    pinMode(PIN_BATERIA, INPUT);
+
+    analogReadResolution(12);
+
+    inicioHistorial = millis();
+
+    for (int i = 0; i < MAX_HISTORIAL; i++) {
+        historialVoltaje[i] = 0;
+        historialTiempo[i] = 0;
+    }
 
   cargarConfiguracionMotores();
 // Pines PWM
@@ -735,6 +863,51 @@ void setup() {
     Robot Futbolero
     </div>
 
+
+<div class="status">
+
+    <h2>Bateria</h2>
+
+    <div style="
+        text-align:center;
+        font-size:42px;
+        font-weight:bold;
+        color:#00d4ff;
+        margin-top:15px;
+    " id="voltajeBateria">
+
+        -- V
+
+    </div>
+
+    <div style="
+        text-align:center;
+        color:#b0bec5;
+        margin-top:5px;
+    ">
+
+        Tensión medida por ADC
+
+    </div>
+
+</div>
+
+
+<div class="status">
+
+    <h2>Historial de bateria</h2>
+
+    <canvas
+        id="graficoBateria"
+        width="400"
+        height="220"
+        style="width:100%;"
+    >
+    </canvas>
+
+</div>
+
+
     <div class="status">
 
     <h2>Joystick autorizado</h2>
@@ -981,13 +1154,199 @@ function guardarMotores(){
 
 }
 
+// ==========================================================
+// ================= BATERÍA ================================
+// ==========================================================
 
-    window.onload = function(){
+function actualizarBateria() {
 
-        cargarConfiguracion();
+    fetch('/bateria')
 
-    };
+    .then(response => response.json())
 
+    .then(data => {
+
+        document.getElementById("voltajeBateria").innerText =
+            data.voltaje.toFixed(2) + " V";
+
+        dibujarGrafico(data.historial);
+
+    })
+
+    .catch(error => {
+
+        console.log(
+            "Error leyendo batería:",
+            error
+        );
+
+    });
+}
+
+
+// ==========================================================
+// ================= GRÁFICO ================================
+// ==========================================================
+
+function dibujarGrafico(datos) {
+
+    const canvas =
+        document.getElementById("graficoBateria");
+
+    const ctx = canvas.getContext("2d");
+
+    const ancho = canvas.width;
+    const alto = canvas.height;
+
+    ctx.clearRect(
+        0,
+        0,
+        ancho,
+        alto
+    );
+
+    if (datos.length < 2) {
+        return;
+    }
+
+
+    // =========================================
+    // BUSCAR MIN / MAX
+    // =========================================
+
+    let minV = datos[0].v;
+    let maxV = datos[0].v;
+
+    datos.forEach(p => {
+
+        if (p.v < minV)
+            minV = p.v;
+
+        if (p.v > maxV)
+            maxV = p.v;
+
+    });
+
+
+    // Un poco de margen vertical
+
+    minV -= 0.1;
+    maxV += 0.1;
+
+
+    if (maxV - minV < 0.5) {
+
+        const centro =
+            (maxV + minV) / 2;
+
+        minV = centro - 0.25;
+        maxV = centro + 0.25;
+
+    }
+
+
+    // =========================================
+    // EJES
+    // =========================================
+
+    ctx.beginPath();
+
+    ctx.moveTo(40, 10);
+    ctx.lineTo(40, alto - 30);
+    ctx.lineTo(ancho - 10, alto - 30);
+
+    ctx.stroke();
+
+
+    // =========================================
+    // TEXTO MIN / MAX
+    // =========================================
+
+    ctx.font = "12px Arial";
+
+    ctx.fillText(
+        maxV.toFixed(1) + " V",
+        5,
+        15
+    );
+
+    ctx.fillText(
+        minV.toFixed(1) + " V",
+        5,
+        alto - 35
+    );
+
+
+    // =========================================
+    // CURVA
+    // =========================================
+
+    ctx.beginPath();
+
+    datos.forEach((p, i) => {
+
+        let x =
+            40 +
+            (i / (datos.length - 1)) *
+            (ancho - 50);
+
+        let y =
+            (alto - 30) -
+            ((p.v - minV) /
+            (maxV - minV)) *
+            (alto - 40);
+
+
+        if (i === 0) {
+
+            ctx.moveTo(x, y);
+
+        } else {
+
+            ctx.lineTo(x, y);
+
+        }
+
+    });
+
+    // COLOR DE LA LÍNEA
+    ctx.strokeStyle = "#00d4ff";
+    ctx.lineWidth = 2;
+
+    ctx.stroke();
+
+
+
+    // =========================================
+    // INFORMACIÓN
+    // =========================================
+
+    ctx.fillText(
+        "Min: " + minV.toFixed(2) + " V",
+        50,
+        alto - 10
+    );
+
+    ctx.fillText(
+        "Max: " + maxV.toFixed(2) + " V",
+        160,
+        alto - 10
+    );
+
+}
+
+window.onload = function(){
+
+    cargarConfiguracion();
+
+    actualizarBateria();
+
+    setInterval(
+        actualizarBateria,
+        1000
+    );
+
+};
     </script>
 
     </body>
@@ -1068,6 +1427,31 @@ server.on("/disconnect", [](){
     }
 
     server.send(400, "text/plain", "Error");
+});
+// ==========================================================
+// ================= DATOS DE BATERÍA =======================
+// ==========================================================
+
+server.on("/bateria", HTTP_GET, []() {
+
+    String json = "{";
+
+    json += "\"voltaje\":";
+    json += String(voltajeBateria, 2);
+
+    json += ",\"adc\":";
+    json += String(analogRead(PIN_BATERIA));
+
+    json += ",\"historial\":";
+    json += obtenerHistorialJSON();
+
+    json += "}";
+
+    server.send(
+        200,
+        "application/json",
+        json
+    );
 });
 
 server.on("/config", HTTP_GET, []() {
@@ -1179,6 +1563,15 @@ server.on("/girar", HTTP_GET, []() {
 // ========================================================================
 
 void loop() {
+        // ================= BATERÍA =================
+
+    if (millis() - ultimaLecturaBateria >= INTERVALO_BATERIA) {
+
+        ultimaLecturaBateria = millis();
+
+        leerBateria();
+    }
+
     controlarAccessPoint();
 
     if (apActivo) {
