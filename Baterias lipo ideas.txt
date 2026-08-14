@@ -1,0 +1,20 @@
+Paginas para comprar:
+-glcompetizione.com
+-tavovernahobbyrc.com.ar
+-degahobbies.com/
+-rc-flash.com.ar
+
+Baterias lipo ideas:
+
+
+-2200mah: https://www.mercadolibre.com.ar/bateria-lipo-ovonic-3s-111v-2200mah-120c-con-conector-dean/up/MLAU4268648819#reco_item_pos=1&reco_backend=item_decorator&reco_backend_type=function&reco_client=home_items-decorator-legacy&reco_id=20b3aebd-2fa4-492b-8bcf-7ba9b7b2e07b&reco_model=&c_id=/home/navigation-trends-recommendations/element&c_uid=7d5dbc43-9b2c-4cf6-a346-3d2d89195a1d&da_id=navigation_trend&da_position=1&id_origin=/home/dynamic_access&da_sort_algorithm=ranker
+
+-2200mah: https://www.mercadolibre.com.ar/bateria-lipo-2200mah-111v-50c-con-conector-xt60-urgenex-rc/up/MLAU4429528969?pdp_filters=official_store%3A55879#polycard_client=search-desktop&be_origin=backend&overlay_label=not_apply&search_layout=grid&position=9&type=product&tracking_id=5f61fd4b-8c9a-45ca-89ae-c4206e838b6f&wid=MLA3671223478&sid=search
+
+-2200mah: https://www.mercadolibre.com.ar/lipo-cnhl-black-series-2200mah-111v-3s-30c-conector-xt60/p/MLA2095109822#polycard_client=search-desktop&be_origin=backend&overlay_label=not_apply&search_layout=grid&position=3&type=product&tracking_id=efafee0c-bc5d-4502-b4cd-f9cf0d735824&wid=MLA1482481364&sid=search
+
+-2200mah:https://www.mercadolibre.com.ar/bateria-lipo-cnhl-3s-40c-2200-mah-111-v-ultra-compacta/p/MLA2082704037#polycard_client=search-desktop&be_origin=backend&overlay_label=not_apply&search_layout=grid&position=31&type=product&tracking_id=290bfc0a-1010-4516-8902-e4c946de8028&wid=MLA1739623313&sid=search
+
+componentes que hay que considerar para la electronica nueva:
+https://candy-ho.com/producto/fuente-step-down-dc-dc-mini360-1v-a-17v-1-8a-17x11mm-arduino/
+
