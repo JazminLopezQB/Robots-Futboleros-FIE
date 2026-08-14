@@ -1,0 +1,6 @@
+(fp_lib_table
+	(version 7)
+	(lib (name "Símbolos") (type "KiCad") (uri "/home/loopez/Documentos/Robots/Robots-Futboleros-FIE/Código_Agos_BLUEPAD32/Placa_Futboleros_Nueva/Librerías_Proyecto/Símbolos.pretty") (options "") (descr ""))
+	(lib (name "LibreríaMotor_Huella") (type "KiCad") (uri "${KIPRJMOD}/LibreríaMotor_Huella.pretty") (options "") (descr ""))
+	(lib (name "LibreríaMotor_Huella") (type "KiCad") (uri "${KIPRJMOD}/LibreríaMotor_Huella.pretty") (options "") (descr ""))
+)
