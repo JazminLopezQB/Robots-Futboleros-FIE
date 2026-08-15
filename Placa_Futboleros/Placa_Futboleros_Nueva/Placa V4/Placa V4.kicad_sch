@@ -2747,6 +2747,18 @@
 		(uuid "44de7a6b-96bd-4dfd-85c1-076bcf17204c")
 	)
 	(junction
+		(at 12.7 30.48)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "5a04843a-4c68-4eb5-b0fe-9a6032990d07")
+	)
+	(junction
+		(at 16.51 25.4)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "6652b7fc-eaf0-4504-b4dd-ca6a21b0ef71")
+	)
+	(junction
 		(at 54.61 25.4)
 		(diameter 0)
 		(color 0 0 0 0)
@@ -2756,13 +2768,7 @@
 		(at 16.51 30.48)
 		(diameter 0)
 		(color 0 0 0 0)
-		(uuid "8d409b03-459f-4113-ae52-8202704b5fae")
-	)
-	(junction
-		(at 16.51 25.4)
-		(diameter 0)
-		(color 0 0 0 0)
-		(uuid "99f8f398-ef4d-4c2e-8751-3c2bc59174c6")
+		(uuid "98428949-65c4-440f-9248-31f721a5064d")
 	)
 	(junction
 		(at 138.43 71.12)
@@ -2781,6 +2787,12 @@
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "bff2e0df-74de-42f5-92af-a24b6c345431")
+	)
+	(junction
+		(at 13.97 25.4)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "c7eb939c-792f-49db-9428-7a1d3bcdac7c")
 	)
 	(junction
 		(at 138.43 60.96)
@@ -3036,6 +3048,26 @@
 	)
 	(wire
 		(pts
+			(xy 12.7 30.48) (xy 16.51 30.48)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "29d1202c-5170-477d-9e50-77014cb88c3a")
+	)
+	(wire
+		(pts
+			(xy 11.43 30.48) (xy 12.7 30.48)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "2c256491-a6f4-4494-8045-45d50144e062")
+	)
+	(wire
+		(pts
 			(xy 102.87 55.88) (xy 105.41 55.88)
 		)
 		(stroke
@@ -3113,6 +3145,16 @@
 			(type default)
 		)
 		(uuid "394bf37a-8873-4419-9736-59e40f098756")
+	)
+	(wire
+		(pts
+			(xy 11.43 20.32) (xy 12.7 20.32)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "3c7a6ef7-411b-4bdf-99de-36195166369e")
 	)
 	(wire
 		(pts
@@ -3283,6 +3325,16 @@
 			(type default)
 		)
 		(uuid "788adc49-3392-4052-b98d-df68bc33ccf8")
+	)
+	(wire
+		(pts
+			(xy 12.7 20.32) (xy 12.7 30.48)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "7b358d49-c38c-4a0b-bff1-05271b0493eb")
 	)
 	(wire
 		(pts
@@ -3496,6 +3548,16 @@
 	)
 	(wire
 		(pts
+			(xy 13.97 17.78) (xy 13.97 25.4)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "b52eefb1-ec0f-4a7e-a649-4fbd128d784d")
+	)
+	(wire
+		(pts
 			(xy 138.43 59.69) (xy 138.43 60.96)
 		)
 		(stroke
@@ -3536,7 +3598,17 @@
 	)
 	(wire
 		(pts
-			(xy 16.51 30.48) (xy 16.51 27.94)
+			(xy 13.97 25.4) (xy 16.51 25.4)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "c6775022-c5e1-4dc6-b1b2-b9cd3b58ec6f")
+	)
+	(wire
+		(pts
+			(xy 11.43 30.48) (xy 11.43 27.94)
 		)
 		(stroke
 			(width 0)
@@ -3686,6 +3758,16 @@
 	)
 	(wire
 		(pts
+			(xy 11.43 25.4) (xy 13.97 25.4)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "e765f7aa-02ff-48ca-84d9-b968552fe0e4")
+	)
+	(wire
+		(pts
 			(xy 203.2 48.26) (xy 204.47 48.26)
 		)
 		(stroke
@@ -3713,6 +3795,16 @@
 			(type default)
 		)
 		(uuid "e8ce740a-22de-4be9-8bb5-b30af18fe937")
+	)
+	(wire
+		(pts
+			(xy 11.43 17.78) (xy 13.97 17.78)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "ebc15dc7-acea-4156-beeb-cf913117f014")
 	)
 	(wire
 		(pts
@@ -4920,7 +5012,7 @@
 	)
 	(symbol
 		(lib_id "Connector:Conn_01x02_Pin")
-		(at 11.43 25.4 0)
+		(at 6.35 25.4 0)
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
@@ -4930,7 +5022,7 @@
 		(dnp no)
 		(uuid "093f0e41-1923-4f04-9ee6-052a8bec7d37")
 		(property "Reference" "J1"
-			(at 11.176 23.114 0)
+			(at 6.096 23.114 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -4939,8 +5031,8 @@
 				)
 			)
 		)
-		(property "Value" "BAT"
-			(at 11.938 30.226 0)
+		(property "Value" "LiPo"
+			(at 6.858 30.226 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -4950,7 +5042,7 @@
 			)
 		)
 		(property "Footprint" "Connector_AMASS:AMASS_XT60-F_1x02_P7.20mm_Vertical"
-			(at 11.43 25.4 0)
+			(at 6.35 25.4 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -4961,7 +5053,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 11.43 25.4 0)
+			(at 6.35 25.4 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -4972,7 +5064,7 @@
 			)
 		)
 		(property "Description" "Generic connector, single row, 01x02, script generated"
-			(at 11.43 25.4 0)
+			(at 6.35 25.4 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -5242,6 +5334,85 @@
 		)
 	)
 	(symbol
+		(lib_id "Connector:Conn_01x02_Pin")
+		(at 6.35 17.78 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "33c9c47d-11f0-4079-8cc8-9aa164a1704c")
+		(property "Reference" "J6"
+			(at 6.096 15.494 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "Pilas"
+			(at 6.858 22.606 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" "Connector_JST:JST_EH_B2B-EH-A_1x02_P2.50mm_Vertical"
+			(at 6.35 17.78 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 6.35 17.78 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Generic connector, single row, 01x02, script generated"
+			(at 6.35 17.78 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "8dad4ead-3cf6-4f19-b9b3-d57925fbc143")
+		)
+		(pin "2"
+			(uuid "fc88f22a-ea3f-4bf8-a980-010ba3373f0e")
+		)
+		(instances
+			(project "Placa V4"
+				(path "/3c60ec8e-c574-466d-9846-b62f9ab3a837"
+					(reference "J6")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
 		(lib_id "Sensor_Current:ACS712xLCTR-30A")
 		(at 33.02 52.07 0)
 		(unit 1)
@@ -5264,7 +5435,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "ACS712xLCTR-30A"
+		(property "Value" "ACS712"
 			(at 35.1633 41.91 0)
 			(show_name no)
 			(do_not_autoplace no)
@@ -5578,7 +5749,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "LED_RED"
+		(property "Value" "LED"
 			(at 60.198 88.138 0)
 			(show_name no)
 			(do_not_autoplace no)
@@ -5791,7 +5962,7 @@
 				)
 			)
 		)
-		(property "Value" "ESP32-DEVKIT-V1"
+		(property "Value" "ESP32_30p"
 			(at 87.63 20.32 0)
 			(show_name no)
 			(do_not_autoplace no)
@@ -6089,7 +6260,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "Motor_Izq_Atras"
+		(property "Value" "MI_At"
 			(at 197.866 17.78 90)
 			(show_name no)
 			(do_not_autoplace no)
@@ -6748,7 +6919,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "Motor_Der_Atras"
+		(property "Value" "MD_At"
 			(at 259.334 18.542 90)
 			(show_name no)
 			(do_not_autoplace no)
@@ -7538,7 +7709,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "Motor_Izq_Adelante"
+		(property "Value" "MI_Ad"
 			(at 180.34 17.78 90)
 			(show_name no)
 			(do_not_autoplace no)
@@ -8063,7 +8234,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "Motor_Der_Adelante"
+		(property "Value" "MD_Ad"
 			(at 242.824 18.796 90)
 			(show_name no)
 			(do_not_autoplace no)
