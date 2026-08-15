@@ -2813,10 +2813,6 @@
 		(uuid "3cf44e21-5a0d-48a9-a18a-16b8a8437843")
 	)
 	(no_connect
-		(at 102.87 72.39)
-		(uuid "476d3846-9c48-4d46-ac5b-61fe9fae8995")
-	)
-	(no_connect
 		(at 175.26 40.64)
 		(uuid "4e4fd5f7-f584-4435-88ec-c7f4f6062df2")
 	)
@@ -2841,7 +2837,7 @@
 		(uuid "a35e486b-1503-47fe-84b7-19beb9673215")
 	)
 	(no_connect
-		(at 72.39 53.34)
+		(at 72.39 58.42)
 		(uuid "abc3cb7a-299a-4898-b3a8-12531b1ba206")
 	)
 	(no_connect
@@ -3140,6 +3136,16 @@
 	)
 	(wire
 		(pts
+			(xy 46.99 52.07) (xy 43.18 52.07)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "409ab069-ad0c-409b-ada3-06952b97e199")
+	)
+	(wire
+		(pts
 			(xy 149.86 48.26) (xy 152.4 48.26)
 		)
 		(stroke
@@ -3250,6 +3256,16 @@
 	)
 	(wire
 		(pts
+			(xy 68.58 53.34) (xy 72.39 53.34)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "729f3499-ad22-404d-8f19-dfb01e0e372b")
+	)
+	(wire
+		(pts
 			(xy 49.53 30.48) (xy 49.53 34.29)
 		)
 		(stroke
@@ -3307,16 +3323,6 @@
 			(type default)
 		)
 		(uuid "84ec3ce1-ce9f-4b4d-8247-e240a53a892b")
-	)
-	(wire
-		(pts
-			(xy 69.85 58.42) (xy 72.39 58.42)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "872380e1-b63f-4b93-a8b1-c7af90f57534")
 	)
 	(wire
 		(pts
@@ -3500,6 +3506,16 @@
 	)
 	(wire
 		(pts
+			(xy 102.87 72.39) (xy 105.41 72.39)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "bac0dfa0-2532-4475-822b-51984252be8b")
+	)
+	(wire
+		(pts
 			(xy 246.38 33.02) (xy 240.03 33.02)
 		)
 		(stroke
@@ -3557,6 +3573,16 @@
 			(type default)
 		)
 		(uuid "d3a889a0-ec26-4101-9d0c-20acf943b902")
+	)
+	(wire
+		(pts
+			(xy 46.99 49.53) (xy 46.99 52.07)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "d5c6d72b-d4a8-4d01-8198-2d0d3e521d83")
 	)
 	(wire
 		(pts
@@ -3690,7 +3716,7 @@
 	)
 	(wire
 		(pts
-			(xy 43.18 52.07) (xy 45.72 52.07)
+			(xy 46.99 49.53) (xy 49.53 49.53)
 		)
 		(stroke
 			(width 0)
@@ -3868,6 +3894,30 @@
 			)
 		)
 	)
+	(global_label "GND"
+		(shape input)
+		(at 105.41 72.39 0)
+		(fields_autoplaced yes)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left)
+		)
+		(uuid "22ed16a7-3f4d-440e-a929-eea8649599c8")
+		(property "Intersheetrefs" "${INTERSHEET_REFS}"
+			(at 112.2657 72.39 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+	)
 	(global_label "5V"
 		(shape input)
 		(at 69.85 25.4 180)
@@ -3894,7 +3944,7 @@
 	)
 	(global_label "Corriente_ADC"
 		(shape input)
-		(at 45.72 52.07 0)
+		(at 49.53 49.53 0)
 		(fields_autoplaced yes)
 		(effects
 			(font
@@ -3904,7 +3954,7 @@
 		)
 		(uuid "2d30e252-0437-474b-be40-9f1a3cecee1b")
 		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 61.9495 52.07 0)
+			(at 65.7595 49.53 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -4001,6 +4051,30 @@
 		(uuid "37d98438-eacf-4f9a-87cf-879aaf12cdb1")
 		(property "Intersheetrefs" "${INTERSHEET_REFS}"
 			(at 60.031 66.04 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right)
+			)
+		)
+	)
+	(global_label "LED_Encendido"
+		(shape input)
+		(at 68.58 53.34 180)
+		(fields_autoplaced yes)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right)
+		)
+		(uuid "46042ad2-11a9-4cf6-a02e-d55c312eabe1")
+		(property "Intersheetrefs" "${INTERSHEET_REFS}"
+			(at 51.5041 53.34 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -4612,30 +4686,6 @@
 			)
 		)
 	)
-	(global_label "LED_Encendido"
-		(shape input)
-		(at 69.85 58.42 180)
-		(fields_autoplaced yes)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify right)
-		)
-		(uuid "e89c87a7-0d54-4111-a7d6-ad5096bfee93")
-		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 52.7741 58.42 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify right)
-			)
-		)
-	)
 	(global_label "SLEEP_M2"
 		(shape input)
 		(at 203.2 40.64 180)
@@ -4899,7 +4949,7 @@
 				)
 			)
 		)
-		(property "Footprint" "Connector_JST:JST_EH_B2B-EH-A_1x02_P2.50mm_Vertical"
+		(property "Footprint" "Connector_AMASS:AMASS_XT60-F_1x02_P7.20mm_Vertical"
 			(at 11.43 25.4 0)
 			(hide yes)
 			(show_name no)

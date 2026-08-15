@@ -7,7 +7,7 @@
 		(at 0 -0.5 0)
 		(unlocked yes)
 		(layer "F.SilkS")
-		(uuid "1c53871a-3d0e-450f-92e2-64874d7ccbe2")
+		(uuid "885bafa3-8628-4572-bda7-a16a6df72d87")
 		(effects
 			(font
 				(size 1 1)
@@ -19,7 +19,7 @@
 		(at 0 1 0)
 		(unlocked yes)
 		(layer "F.Fab")
-		(uuid "c469e912-c2b6-42f2-b7e0-b38386ed2c36")
+		(uuid "b80e1d79-6fce-4f43-8caa-06c9c84d508b")
 		(effects
 			(font
 				(size 1 1)
@@ -32,7 +32,7 @@
 		(unlocked yes)
 		(layer "F.Fab")
 		(hide yes)
-		(uuid "6b825446-cfa4-4582-a2b9-6c4a590fbc57")
+		(uuid "91140245-4c16-4c38-b4d9-56f834deb774")
 		(effects
 			(font
 				(size 1 1)
@@ -45,7 +45,7 @@
 		(unlocked yes)
 		(layer "F.Fab")
 		(hide yes)
-		(uuid "89779ca0-4ed4-46ad-be07-8ebe95a58c7e")
+		(uuid "44e1c44e-87d2-4760-9323-c8485db3d9b0")
 		(effects
 			(font
 				(size 1 1)
@@ -64,13 +64,13 @@
 		)
 		(fill no)
 		(layer "F.SilkS")
-		(uuid "df015e56-13fd-49ac-b9f8-8581fe86b476")
+		(uuid "fd12ad47-1798-41ae-bbb1-a114e624093e")
 	)
 	(fp_text user "${REFERENCE}"
 		(at 0 2.5 0)
 		(unlocked yes)
 		(layer "F.Fab")
-		(uuid "84a93166-a371-458a-b575-5a53869298da")
+		(uuid "4d5c92e5-1304-4c5d-a29b-316f0371084d")
 		(effects
 			(font
 				(size 1 1)
@@ -79,28 +79,55 @@
 		)
 	)
 	(pad "1" thru_hole oval
-		(at -12.7 -2.54)
+		(at 11.684 -2.54)
 		(size 2.6 1.8)
 		(drill 0.8)
 		(layers "*.Cu" "*.Mask")
 		(remove_unused_layers no)
-		(uuid "5670c193-a94b-4b7b-b480-61eacf3bab76")
-	)
-	(pad "2" thru_hole oval
-		(at -12.7 0)
-		(size 2.6 1.8)
-		(drill 0.8)
-		(layers "*.Cu" "*.Mask")
-		(remove_unused_layers no)
-		(uuid "131bfad3-e605-4a01-98e3-6b7293fb85d1")
+		(uuid "187e46ea-909e-4e45-a709-8d088cfe25b1")
 	)
 	(pad "3" thru_hole oval
-		(at -12.7 2.54)
+		(at 11.684 2.54)
 		(size 2.6 1.8)
 		(drill 0.8)
 		(layers "*.Cu" "*.Mask")
 		(remove_unused_layers no)
-		(uuid "78e93ceb-56dd-4b71-a2e9-73ee96bb04bc")
+		(uuid "30b7fa8d-a37a-4918-84ed-531a3104d347")
+	)
+	(pad "5" thru_hole oval
+		(at -12.954 2.54)
+		(size 2.6 1.8)
+		(drill 0.8)
+		(layers "*.Cu" "*.Mask")
+		(remove_unused_layers no)
+		(uuid "0cf7cfd6-932a-4d21-82e4-7fd1ddc3f855")
+	)
+	(pad "7" thru_hole oval
+		(at -12.954 0)
+		(size 2.6 1.8)
+		(drill 0.8)
+		(layers "*.Cu" "*.Mask")
+		(remove_unused_layers no)
+		(uuid "ea7e7427-440d-4f96-9b0a-f6bc8b7bee79")
+	)
+	(pad "8" thru_hole oval
+		(at -12.954 -2.54)
+		(size 2.6 1.8)
+		(drill 0.8)
+		(layers "*.Cu" "*.Mask")
+		(remove_unused_layers no)
+		(uuid "7e4061f8-536f-4620-afee-33dcd94f15f5")
 	)
 	(embedded_fonts no)
+	(model "/home/loopez/Documentos/Robots/Robots-Futboleros-FIE/Placa_Futboleros/Librerías_Proyecto/SensorCorriente/acs712-arduino-shield-1.snapshot.3/acs712.STEP"
+		(offset
+			(xyz 0 0 0)
+		)
+		(scale
+			(xyz 1 1 1)
+		)
+		(rotate
+			(xyz -0 -0 90)
+		)
+	)
 )

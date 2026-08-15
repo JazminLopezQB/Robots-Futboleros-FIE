@@ -7,7 +7,7 @@
 		(at 0 -3.6 0)
 		(unlocked yes)
 		(layer "F.SilkS")
-		(uuid "859291ee-04fa-41f0-afc4-5d3eddac4062")
+		(uuid "c371f0ed-41dd-4369-ac6e-1c5474fe2b30")
 		(effects
 			(font
 				(size 1 1)
@@ -19,7 +19,7 @@
 		(at 0 -1.5 0)
 		(unlocked yes)
 		(layer "F.Fab")
-		(uuid "77cb857f-0b15-48ca-bad1-f4f3975668f9")
+		(uuid "9f0f6da4-1e7d-4596-ac75-0b0df653554c")
 		(effects
 			(font
 				(size 1 1)
@@ -32,7 +32,7 @@
 		(unlocked yes)
 		(layer "F.Fab")
 		(hide yes)
-		(uuid "0e500693-7ac9-45e4-97ca-ba4fb1709b7e")
+		(uuid "ddbb1a5a-24d2-47c7-b4d0-396ee9e9315d")
 		(effects
 			(font
 				(size 1 1)
@@ -45,7 +45,7 @@
 		(unlocked yes)
 		(layer "F.Fab")
 		(hide yes)
-		(uuid "d395bcdb-782d-424d-90af-9ebe8ffe6f98")
+		(uuid "cf2acc9b-8d80-4de7-a357-59f90b5c9910")
 		(effects
 			(font
 				(size 1 1)
@@ -64,13 +64,13 @@
 		)
 		(fill no)
 		(layer "F.SilkS")
-		(uuid "86ed42fa-d8c5-4a5a-bd99-4136a9e1cef0")
+		(uuid "48db8219-21e7-44ab-800f-1f40c2796d55")
 	)
 	(fp_text user "${REFERENCE}"
 		(at 0 0 0)
 		(unlocked yes)
 		(layer "F.Fab")
-		(uuid "fb24e085-9fca-458f-b770-357a32dbba75")
+		(uuid "03c97300-5572-42c8-914a-96cdb4c86fd1")
 		(effects
 			(font
 				(size 1 1)
@@ -78,37 +78,92 @@
 			)
 		)
 	)
-	(pad "1" thru_hole circle
+	(pad "1" thru_hole oval
 		(at -7.9 -4.8)
-		(size 1.6 1.6)
+		(size 2.6 1.8)
 		(drill 0.8)
 		(layers "*.Cu" "*.Mask")
 		(remove_unused_layers no)
-		(uuid "6ce207c3-030d-489d-9a55-ebb4c5fc71b2")
+		(uuid "27ad1bd8-d172-45ce-990b-5a6b20207244")
 	)
-	(pad "2" thru_hole circle
-		(at 7.9 -4.8)
-		(size 1.6 1.6)
+	(pad "2" thru_hole oval
+		(at 7.9 -4.8 180)
+		(size 2.6 1.8)
 		(drill 0.8)
 		(layers "*.Cu" "*.Mask")
 		(remove_unused_layers no)
-		(uuid "a2ac4f43-eeed-427a-9720-9b22310d4e98")
+		(uuid "0a814588-c416-47a7-b0e7-704cc4fc3504")
 	)
-	(pad "3" thru_hole circle
+	(pad "3" thru_hole oval
 		(at -7.9 5)
-		(size 1.6 1.6)
+		(size 2.6 1.8)
 		(drill 0.8)
 		(layers "*.Cu" "*.Mask")
 		(remove_unused_layers no)
-		(uuid "42bb638c-7d53-4fb9-85e3-17bd95d61e6f")
+		(uuid "1384969d-a1f6-4c67-b567-359ca4315b32")
 	)
-	(pad "4" thru_hole circle
+	(pad "4" thru_hole oval
 		(at 7.9 5)
-		(size 1.6 1.6)
+		(size 2.6 1.8)
 		(drill 0.8)
 		(layers "*.Cu" "*.Mask")
 		(remove_unused_layers no)
-		(uuid "638c6222-883c-48d3-9914-14671f7f42e7")
+		(uuid "da7abc7c-9ace-4be9-af64-14152975e4f3")
 	)
 	(embedded_fonts no)
+	(model "/home/loopez/Documentos/Robots/Robots-Futboleros-FIE/Placa_Futboleros/Librerías_Proyecto/StepDown_Mini360/mini360-dc-dc-step-down-module-1.snapshot.2/mini360.step"
+		(offset
+			(xyz -9.1 -6 2.5)
+		)
+		(scale
+			(xyz 1 1 1)
+		)
+		(rotate
+			(xyz -90 -0 -90)
+		)
+	)
+	(model "${KICAD10_3DMODEL_DIR}/Connector_PinHeader_2.54mm.3dshapes/PinHeader_1x01_P2.54mm_Vertical.step"
+		(offset
+			(xyz -7.9 -5 0)
+		)
+		(scale
+			(xyz 1 1 1)
+		)
+		(rotate
+			(xyz -0 -0 -0)
+		)
+	)
+	(model "${KICAD10_3DMODEL_DIR}/Connector_PinHeader_2.54mm.3dshapes/PinHeader_1x01_P2.54mm_Vertical.step"
+		(offset
+			(xyz -7.9 4.8 0)
+		)
+		(scale
+			(xyz 1 1 1)
+		)
+		(rotate
+			(xyz -0 -0 -0)
+		)
+	)
+	(model "${KICAD10_3DMODEL_DIR}/Connector_PinHeader_2.54mm.3dshapes/PinHeader_1x01_P2.54mm_Vertical.step"
+		(offset
+			(xyz 7.9 4.8 0)
+		)
+		(scale
+			(xyz 1 1 1)
+		)
+		(rotate
+			(xyz -0 -0 -0)
+		)
+	)
+	(model "${KICAD10_3DMODEL_DIR}/Connector_PinHeader_2.54mm.3dshapes/PinHeader_1x01_P2.54mm_Vertical.step"
+		(offset
+			(xyz 7.9 -5 0)
+		)
+		(scale
+			(xyz 1 1 1)
+		)
+		(rotate
+			(xyz -0 -0 -0)
+		)
+	)
 )
