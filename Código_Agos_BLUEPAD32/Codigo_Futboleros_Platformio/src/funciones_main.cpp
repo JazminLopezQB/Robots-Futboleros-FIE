@@ -239,13 +239,13 @@ void iniciarAccessPoint(bool temporal) {
     //Bestia 2.0 192.168.24.1
     //Bella 192.168.25.1
 
-    IPAddress local_IP(192, 168, 25, 1);
-    IPAddress gateway(192, 168, 25, 1);
+    IPAddress local_IP(192, 168, 24, 1);
+    IPAddress gateway(192, 168, 24, 1);
     IPAddress subnet(255, 255, 255, 0);
 
     WiFi.softAPConfig(local_IP, gateway, subnet);
 
-    bool ok = WiFi.softAP("Robot-Bella", "Fulbo123", 1, false, 1);
+    bool ok = WiFi.softAP("Robot-Bestia2.0", "Fulbo123", 1, false, 1);
 
     if (ok) {
         apActivo = true;

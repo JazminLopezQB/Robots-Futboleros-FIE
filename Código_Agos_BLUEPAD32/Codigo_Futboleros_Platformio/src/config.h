@@ -9,11 +9,11 @@
 #define ZONA_DRIFT 10
 
 // PINES DE MOTORES
-#define Atras_Izq 26
-#define Adelante_Izq 25
+#define Atras_Izq 25
+#define Adelante_Izq 26
 
-#define Atras_Der 21
-#define Adelante_Der 18
+#define Atras_Der 14
+#define Adelante_Der 12
 
 // Bestia 2.0 - 25 26 14 12
 // Bella 26 25 12 14
@@ -26,7 +26,7 @@
 #define RESISTENCIA_INFERIOR 1500.0
 
 // LED ESP32
-#define PIN_LED 13 // 2
+#define PIN_LED 2 // 13
 
 // HISTORIAL
 #define MAX_HISTORIAL 300
