@@ -7,7 +7,7 @@
 		(at 0 -3.6 0)
 		(unlocked yes)
 		(layer "F.SilkS")
-		(uuid "c371f0ed-41dd-4369-ac6e-1c5474fe2b30")
+		(uuid "9849265c-8988-4092-ab15-a0f76abf73e0")
 		(effects
 			(font
 				(size 1 1)
@@ -19,7 +19,7 @@
 		(at 0 -1.5 0)
 		(unlocked yes)
 		(layer "F.Fab")
-		(uuid "9f0f6da4-1e7d-4596-ac75-0b0df653554c")
+		(uuid "4d60438a-4041-4ef3-8c88-b8ed9021bf59")
 		(effects
 			(font
 				(size 1 1)
@@ -32,7 +32,7 @@
 		(unlocked yes)
 		(layer "F.Fab")
 		(hide yes)
-		(uuid "ddbb1a5a-24d2-47c7-b4d0-396ee9e9315d")
+		(uuid "9fbf24ed-4d07-450b-a820-6379a0777fca")
 		(effects
 			(font
 				(size 1 1)
@@ -45,7 +45,7 @@
 		(unlocked yes)
 		(layer "F.Fab")
 		(hide yes)
-		(uuid "cf2acc9b-8d80-4de7-a357-59f90b5c9910")
+		(uuid "2d6460bc-9db9-450a-9997-b0ab5130a4fa")
 		(effects
 			(font
 				(size 1 1)
@@ -64,13 +64,13 @@
 		)
 		(fill no)
 		(layer "F.SilkS")
-		(uuid "48db8219-21e7-44ab-800f-1f40c2796d55")
+		(uuid "977a959d-e847-4a3e-86a2-4ea400912db6")
 	)
 	(fp_text user "${REFERENCE}"
 		(at 0 0 0)
 		(unlocked yes)
 		(layer "F.Fab")
-		(uuid "03c97300-5572-42c8-914a-96cdb4c86fd1")
+		(uuid "90f0427d-9edc-4f3c-a193-c0afed97d460")
 		(effects
 			(font
 				(size 1 1)
@@ -79,36 +79,36 @@
 		)
 	)
 	(pad "1" thru_hole oval
-		(at -7.9 -4.8)
+		(at -7.9 -4.8 90)
 		(size 2.6 1.8)
 		(drill 0.8)
 		(layers "*.Cu" "*.Mask")
 		(remove_unused_layers no)
-		(uuid "27ad1bd8-d172-45ce-990b-5a6b20207244")
+		(uuid "c8bf4a34-51e2-4a00-9b43-3b4cab3775d7")
 	)
 	(pad "2" thru_hole oval
-		(at 7.9 -4.8 180)
+		(at 7.9 -4.8 90)
 		(size 2.6 1.8)
 		(drill 0.8)
 		(layers "*.Cu" "*.Mask")
 		(remove_unused_layers no)
-		(uuid "0a814588-c416-47a7-b0e7-704cc4fc3504")
+		(uuid "9d241d27-45b7-4bcc-ad5e-f16f81820135")
 	)
 	(pad "3" thru_hole oval
-		(at -7.9 5)
+		(at -7.9 5 90)
 		(size 2.6 1.8)
 		(drill 0.8)
 		(layers "*.Cu" "*.Mask")
 		(remove_unused_layers no)
-		(uuid "1384969d-a1f6-4c67-b567-359ca4315b32")
+		(uuid "f711ca1a-9c56-4356-9129-8983e4de27ed")
 	)
 	(pad "4" thru_hole oval
-		(at 7.9 5)
+		(at 7.9 5 90)
 		(size 2.6 1.8)
 		(drill 0.8)
 		(layers "*.Cu" "*.Mask")
 		(remove_unused_layers no)
-		(uuid "da7abc7c-9ace-4be9-af64-14152975e4f3")
+		(uuid "c7a63ac8-322b-43b5-9503-119ba933297f")
 	)
 	(embedded_fonts no)
 	(model "/home/loopez/Documentos/Robots/Robots-Futboleros-FIE/Placa_Futboleros/Librerías_Proyecto/StepDown_Mini360/mini360-dc-dc-step-down-module-1.snapshot.2/mini360.step"
