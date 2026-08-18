@@ -2,7 +2,6 @@
 	(version 7)
 	(lib (name "Mini360") (type "KiCad") (uri "/home/loopez/Documentos/Robots/Robots-Futboleros-FIE/Placa_Futboleros/Librerías_Proyecto/StepDown_Mini360/Mini360.pretty") (options "") (descr ""))
 	(lib (name "SensorCorriente") (type "KiCad") (uri "/home/loopez/Documentos/Robots/Robots-Futboleros-FIE/Placa_Futboleros/Librerías_Proyecto/SensorCorriente/SensorCorriente.pretty") (options "") (descr ""))
-	(lib (name "SensorCorriente") (type "KiCad") (uri "/home/loopez/Documentos/Robots/Robots-Futboleros-FIE/Placa_Futboleros/Librerías_Proyecto/SensorCorriente.pretty") (options "") (descr ""))
 	(lib (name "Library") (type "KiCad") (uri "/home/loopez/Documentos/Robots/Robots-Futboleros-FIE/Placa_Futboleros/Librerías_Proyecto/SensorCorriente/Library.pretty") (options "") (descr ""))
-	(lib (name "SensorCorriente") (type "KiCad") (uri "/home/loopez/Documentos/Robots/Robots-Futboleros-FIE/Placa_Futboleros/Librerías_Proyecto/SensorCorriente/SensorCorriente.pretty") (options "") (descr ""))
+	(lib (name "INA219") (type "KiCad") (uri "/home/loopez/Documentos/Robots/Robots-Futboleros-FIE/Placa_Futboleros/Librerías_Proyecto/INA219") (options "") (descr ""))
 )
