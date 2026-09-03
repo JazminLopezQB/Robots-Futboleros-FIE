@@ -4,6 +4,11 @@
 #include "config.h"
 #include "DeclaracionDeFunciones.h"
 
+// El manejo con botones, a diferencia del giro en la palanca, para izq y der, 
+// es que con los botones solo se activa el motor contrario y gira; mientras que 
+// para el caso del stick, se activa el motor contrario marcha adelante y el otro en reversa.
+
+
 // Adelante con triangulo
 void adelante() {
   switch(nivelActual){
@@ -66,8 +71,7 @@ void atras() {
   return;
 }
 
-// En los viejos y la bestia 1.0 funcion izq y der al reves
-
+// RECORDATORIO:  En los viejos y la bestia 1.0 funcion izq y der van al reves
 // Izquierda con círculo
 void izquierda() {
   switch(nivelActual){

@@ -1,11 +1,13 @@
 #pragma once
 
+// LIBRERÍAS
 #include <Arduino.h>
 #include <stdint.h>
 #include <Preferences.h>
 #include <WebServer.h>
 #include <Bluepad32.h>
 
+// Corrección del drift
 #define ZONA_DRIFT 10
 
 // PINES DE MOTORES
@@ -15,23 +17,42 @@
 #define Atras_Der 21
 #define Adelante_Der 18
 
-// Bestia 2.0 - 25 26 19 18
-// Bella 26 25 21 18
-// Bestia tranqui 25 26 21 18
+// Ajustes - Recordatorio:
+    // Bestia 2.0 - 25 26 19 18
+    // Bella 26 25 21 18
+    // Bestia tranqui 25 26 21 18
 
-// BATERÍA
+    // Las IP's:
+        //Bestia 1.0 192.168.23.1
+        //Bestia 2.0 192.168.24.1
+        //Bella 192.168.25.1
+    
+    // En la función movimiento, en la mezcla diferencial: 
+        // Tener en cuenta que para la Bestia 1.0 y versiones anteriores puede que 
+        // haya que invertir los signos de pwmIzq y pwmDer. Se cambia lo de abajo pero donde está implementado
+        
+        /*
+        float pwmIzq = (normY + normX) * 127.0 * factorVelocidad;
+        float pwmDer = (normY - normX) * 127.0 * factorVelocidad;
+        */
+    
+        // También tener en cuenta que para esas versiones, también hay que cambiar 
+        // los izq y der del manejo con botones. 
+
+// PIN BATERÍA
 #define PIN_BATERIA 32
 
+// Valores del divisor resistivo del ADC
 #define RESISTENCIA_SUPERIOR 2700.0
 #define RESISTENCIA_INFERIOR 1500.0
 
-// LED ESP32
+// LED
 #define PIN_LED 2 // 13
 
 // HISTORIAL
 #define MAX_HISTORIAL 300
 
-// PWM
+// PWM - Canales, freq, resolución
 #define CH_ADELANTE_DER 0
 #define CH_ATRAS_DER 1
 
@@ -42,12 +63,9 @@
 #define PWM_RES 8
 
 // ESTRUCTURA DEL GAMEPAD
-struct GamepadInfo {
-    ControllerPtr ctl;
-    String mac;
-    String name;
-    bool connected;
-};
+struct GamepadInfo { ControllerPtr ctl; String mac; String name; bool connected; };
+
+// Definición de VARIABLES -----------------------
 
 // PWM
 extern uint8_t PWM_MAX;
@@ -64,10 +82,14 @@ extern const unsigned long tiempoRebote;
 extern int anguloGiro;
 
 // CONSTANTES DE MOTORES
+// Permite realizar una corrección de los motores,
+// por ejemplo si uno va más potente que el otro. 
 extern uint8_t K_IZQ;
 extern uint8_t K_DER;
 
 // PWM ACTUAL
+// Permite luego en la web, actualizar los valores
+// de PWM. 
 extern int pwmActualAdelanteIzq;
 extern int pwmActualAtrasIzq;
 extern int pwmActualAdelanteDer;
@@ -94,10 +116,12 @@ extern unsigned long inicioAP;
 extern const unsigned long DURACION_AP;
 
 // BOTONES
+// Son los botones para prender y apagar
+// el access point.
 extern bool botonStartAnterior;
 extern bool botonSelectAnterior;
 
-// BATERÍA
+// BATERÍA - Lectura ADC
 extern float voltajeBateria;
 extern float voltajeADC;
 extern unsigned long ultimaLecturaBateria;

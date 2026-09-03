@@ -12,9 +12,8 @@
 // Funciones
 // ----------------------------------------------------------
 
-// Función para Leer la Batería -----------------------------
+// Función para Leer la Batería del ADC -----------------------------
 void leerBateria() {
-
     int adc = analogRead(PIN_BATERIA);
 
     // Conversión de la lectura analógica a Voltaje del pin ADC
@@ -54,8 +53,7 @@ String obtenerHistorialJSON() {
 
     for (int i = 0; i < cantidadHistorial; i++) {
 
-        int posicion =
-            (inicio + i) % MAX_HISTORIAL;
+        int posicion = (inicio + i) % MAX_HISTORIAL;
 
         json += "{";
 
@@ -84,26 +82,27 @@ unsigned long tiempoUltimoCambio = 0;
 
 void controlVelocidad(bool flecha_arr, bool flecha_abaj) {
 
-  unsigned long ahora = millis();
+    unsigned long ahora = millis();
 
-  if (ahora - tiempoUltimoCambio >= tiempoRebote) { // condicional para evitar el rebote de tiempo
+// condicional para evitar el rebote de tiempo
+    if (ahora - tiempoUltimoCambio >= tiempoRebote) { 
 
-// Si se presiona la flecha de arriba y el nivel actual es menor a la cantidad de niveles...
-    if (flecha_arr && nivelActual < cantNiveles-1) {
-      nivelActual++; // Aumento el nivel
-      factorVelocidad = niveles[nivelActual]; // Inicializo el factor de velocidad dentro del array
-      //Serial.printf("Nivel %d | Factor %.2f\n", nivelActual, factorVelocidad);
-      tiempoUltimoCambio = ahora; // Guardo el tiempo de cambio
+    // Si se presiona la flecha de arriba y el nivel actual es menor a la cantidad de niveles...
+        if (flecha_arr && nivelActual < cantNiveles-1) {
+            nivelActual++; // Aumento el nivel
+            factorVelocidad = niveles[nivelActual]; // Inicializo el factor de velocidad dentro del array
+            //Serial.printf("Nivel %d | Factor %.2f\n", nivelActual, factorVelocidad);
+            tiempoUltimoCambio = ahora; // Guardo el tiempo de cambio
+        }
+
+    // Si se presiona la flecha de abajo y el nivel actual es mayor a cero...
+        if (flecha_abaj && nivelActual > 0) {
+            nivelActual--; // Disminuyo el nivel
+            factorVelocidad = niveles[nivelActual]; // Inicializo el factor de velocidad dentro del array
+            //Serial.printf("Nivel %d | Factor %.2f\n", nivelActual, factorVelocidad);
+            tiempoUltimoCambio = ahora; // Guardo el tiempo de cambio
+        }
     }
-
-// Si se presiona la flecha de abajo y el nivel actual es mayor a cero...
-    if (flecha_abaj && nivelActual > 0) {
-      nivelActual--; // Disminuyo el nivel
-      factorVelocidad = niveles[nivelActual]; // Inicializo el factor de velocidad dentro del array
-      //Serial.printf("Nivel %d | Factor %.2f\n", nivelActual, factorVelocidad);
-      tiempoUltimoCambio = ahora; // Guardo el tiempo de cambio
-    }
-  }
 }
 
 // Función para detener los motores -----------------------------
@@ -139,18 +138,17 @@ void movimiento(ControllerPtr ctl, bool turbo) {
     float x = ctl->axisRX();
     float y = -ctl->axisRY();
 
-    // TURBO
+    // Condicional para ajustar el TURBO en avance hacia los lados
     if (turbo) {
-        // R1 mantiene SIEMPRE el avance hacia adelante
+    // R1 mantiene SIEMPRE el avance hacia adelante
+
         // Velocidad base del turbo
         float avance = 255.0;
 
-        // ------------------------------------------
         // La palanca solamente controla el giro
         float giro = x / 512.0;
 
-        // Reducimos la influencia de la palanca
-        // para que solamente haga una corrección suave.
+        // Reducimos la influencia de la palanca para que solamente haga una corrección suave.
         giro *= 20;
 
         // Limitar corrección
@@ -163,11 +161,9 @@ void movimiento(ControllerPtr ctl, bool turbo) {
         pwmIzq = constrain(pwmIzq, 0, 255);
         pwmDer = constrain(pwmDer, 0, 255);
 
-        int adelanteIzq =
-            constrain((int)pwmIzq + K_IZQ, 0, 255);
+        int adelanteIzq = constrain((int)pwmIzq + K_IZQ, 0, 255);
 
-        int adelanteDer =
-            constrain((int)pwmDer + K_DER, 0, 255);
+        int adelanteDer = constrain((int)pwmDer + K_DER, 0, 255);
 
         escribirPWM(
             adelanteIzq,
@@ -179,7 +175,7 @@ void movimiento(ControllerPtr ctl, bool turbo) {
         return;
     }
 
-    // MOVIMIENTO NORMAL
+    // MOVIMIENTO NORMAL - Sin turbo
     if (abs(x) < ZONA_DRIFT && abs(y) < ZONA_DRIFT) {
         detenerMotores();
         return;
@@ -189,22 +185,24 @@ void movimiento(ControllerPtr ctl, bool turbo) {
     float normY = y / 512.0;
 
     // Mezcla diferencial normal
-    float pwmIzq = (normY + normX) * 127.0 * factorVelocidad;
+    // Acá tener en cuenta que para la Bestia 1.0 y versiones anteriores puede que haya que invertir 
+    // los signos de pwmIzq y pwmDer.
 
+    float pwmIzq = (normY + normX) * 127.0 * factorVelocidad;
     float pwmDer = (normY - normX) * 127.0 * factorVelocidad;
 
     // Movimiento normal respeta PWM_MAX
     pwmIzq = constrain(pwmIzq,-PWM_MAX,PWM_MAX);
     pwmDer = constrain(pwmDer,-PWM_MAX,PWM_MAX);
 
-
-    // MOTOR IZQUIERDO
+    // Variables de los motores
     int adelanteIzq = 0;
     int atrasIzq = 0;
 
     int adelanteDer = 0;
     int atrasDer = 0;
 
+    // MOTOR IZQUIERDO
     if (pwmIzq >= 0) {
         adelanteIzq = constrain((int)pwmIzq + K_IZQ,0,255);
     } else {
@@ -226,25 +224,27 @@ void movimiento(ControllerPtr ctl, bool turbo) {
     );
 }
 
-// ====== ACCESS POINT =====
+// ====== ACCESS POINT ======
 void iniciarAccessPoint(bool temporal) {
 
-    // Si ya está encendido, no hacemos nada
+// Si ya está encendido, no hacemos nada
     if (apActivo)
         return;
 
     WiFi.mode(WIFI_AP);
 
-    //Bestia 1.0 192.168.23.1
-    //Bestia 2.0 192.168.24.1
-    //Bella 192.168.25.1
-
     IPAddress local_IP(192, 168, 25, 1);
     IPAddress gateway(192, 168, 25, 1);
     IPAddress subnet(255, 255, 255, 0);
 
+// IP's para cada web (conviene para que no se mezclen si más de uno está prendido)
+    //Bestia 1.0 192.168.23.1
+    //Bestia 2.0 192.168.24.1
+    //Bella 192.168.25.1
+
     WiFi.softAPConfig(local_IP, gateway, subnet);
 
+// Acá podés cambiar el nombre del wifi, también para que no sea confuso
     bool ok = WiFi.softAP("Robot-Bella", "Fulbo123", 1, false, 1);
 
     if (ok) {
@@ -252,11 +252,13 @@ void iniciarAccessPoint(bool temporal) {
         apTemporal = temporal;
         inicioAP = millis();
 
+    /*
         if (apTemporal) {
             Serial.println("Modo temporal: 2 minutos");
         } else {
             Serial.println("Modo manual: sin limite de tiempo");
         }
+    */
     
     } else {
         Serial.println("ERROR AL INICIAR AP");
@@ -271,8 +273,7 @@ void apagarAccessPoint() {
     //Serial.println("========== WIFI AP ==========");
     //Serial.println("Apagando Access Point...");
 
-    // Apaga solamente el Access Point.
-    // NO apagamos Bluetooth.
+    // Apaga solamente el Access Point - NO apagamos Bluetooth.
     WiFi.softAPdisconnect(false);
 
     apActivo = false;
@@ -286,19 +287,19 @@ void controlarAccessPoint() {
     if (!apActivo)
         return;
 
-    // Si fue iniciado manualmente con START,
-    // no tiene tiempo límite.
+    // Si fue iniciado manualmente con START, no tiene tiempo límite.
     if (!apTemporal)
         return;
 
-    // Si fue iniciado automáticamente al arrancar,
-    // dura solamente 2 minutos.
+    // Si fue iniciado automáticamente al arrancar, dura solamente 2 minutos.
     if (millis() - inicioAP >= DURACION_AP) {
         apagarAccessPoint();
     }
 }
 
 // ===== CONFIGURACIÓN DE MOTORES =======
+// Es lo que se carga para actualizar la configuración de los motores
+// en la página web.
 void cargarConfiguracionMotores() {
     prefs.begin("config", true);
 
@@ -340,6 +341,8 @@ void guardarConfiguracionMotores() {
 */
 }
 
+// Esta función es la que permite escribir el pwm, sólo se llama a la función y se le pasa los 
+// parámetros en una sola línea.
 void escribirPWM (int adelanteIzq, int atrasIzq, int adelanteDer, int atrasDer) {
 
     pwmActualAdelanteIzq = adelanteIzq;
