@@ -132,97 +132,108 @@ void maxima() {
     String sentidoDer = "ADELANTE";
 }
 
+int aplicarZonaMuerta(int valor, int zonaMuerta) {
+    if (abs(valor) < zonaMuerta) {
+        return 0;
+    }
+    if (valor > 0) {
+        return map(valor, zonaMuerta, 512, 0, 512);
+    } else {
+        return map(valor, -zonaMuerta, -512, 0, -512);
+    }
+}
+
 // Función para mover los motores -----------------------------
 void movimiento(ControllerPtr ctl, bool turbo) {
 
-    float x = ctl->axisRX();
-    float y = -ctl->axisRY();
-
-    // Condicional para ajustar el TURBO en avance hacia los lados
+    // ==========================================
+    // 1. MODO TURBO (R1 presionado)
+    // ==========================================
     if (turbo) {
-    // R1 mantiene SIEMPRE el avance hacia adelante
+        // Avance fijo a la potencia configurada en el perfil
+        float baseAvance = perfilActivo.pwmMax; 
 
-        // Velocidad base del turbo
-        float avance = 255.0;
+        // 📍 Elegir qué stick hace la CORRECCIÓN DE GIRO durante el Turbo:
+        // 0 = Stick Izquierdo (X), 1 = Stick Derecho (RX)
+        int ejeGiroTurbo = (perfilActivo.stickGiro == 0) ? ctl->axisX() : ctl->axisRX();
 
-        // La palanca solamente controla el giro
-        float giro = x / 512.0;
+        // Inversión de eje si está configurado en el perfil
+        if (perfilActivo.invertirEjeX) ejeGiroTurbo = -ejeGiroTurbo;
 
-        // Reducimos la influencia de la palanca para que solamente haga una corrección suave.
-        giro *= 20;
+        // Aplicar Zona Muerta
+        int zm = (perfilActivo.zonaMuerta > 0) ? perfilActivo.zonaMuerta : ZONA_DRIFT;
+        int giroTurboRaw = aplicarZonaMuerta(ejeGiroTurbo, zm);
 
-        // Limitar corrección
-        giro = constrain(giro, -100.0, 100.0);
+        // Escalado y aplicación del multiplicador kGiro
+        float giroTurbo = (giroTurboRaw / 512.0) * perfilActivo.kGiro * 20.0;
+        giroTurbo = constrain(giroTurbo, -100.0, 100.0);
 
-        float pwmIzq = avance + giro;
-        float pwmDer = avance - giro;
+        float pwmIzq = baseAvance + giroTurbo;
+        float pwmDer = baseAvance - giroTurbo;
 
         // Limitar a 0-255
         pwmIzq = constrain(pwmIzq, 0, 255);
         pwmDer = constrain(pwmDer, 0, 255);
 
-        int adelanteIzq = constrain((int)pwmIzq + K_IZQ, 0, 255);
+        // Sumar calibración de motores del perfil activo
+        int adelanteIzq = constrain((int)pwmIzq + perfilActivo.kIzq, 0, 255);
+        int adelanteDer = constrain((int)pwmDer + perfilActivo.kDer, 0, 255);
 
-        int adelanteDer = constrain((int)pwmDer + K_DER, 0, 255);
-
-        escribirPWM(
-            adelanteIzq,
-            0,
-            adelanteDer,
-            0
-        );
-
+        escribirPWM(adelanteIzq, 0, adelanteDer, 0);
         return;
     }
 
-    // MOVIMIENTO NORMAL - Sin turbo
-    if (abs(x) < ZONA_DRIFT && abs(y) < ZONA_DRIFT) {
+    // ==========================================
+    // 2. MOVIMIENTO NORMAL (Siempre con Stick Derecho: RX / RY)
+    // ==========================================
+    float x = ctl->axisRX();
+    float y = -ctl->axisRY(); // Invertimos Y para que arriba sea positivo
+
+    // Aplicar Inversión de Ejes según el perfil
+    if (perfilActivo.invertirEjeX) x = -x;
+    if (perfilActivo.invertirEjeY) y = -y;
+
+    // Aplicar Zona Muerta
+    int zm = (perfilActivo.zonaMuerta > 0) ? perfilActivo.zonaMuerta : ZONA_DRIFT;
+    int avance = aplicarZonaMuerta((int)y, zm);
+    int giroRaw = aplicarZonaMuerta((int)x, zm);
+
+    if (avance == 0 && giroRaw == 0) {
         detenerMotores();
         return;
     }
 
-    float normX = x / 512.0;
-    float normY = y / 512.0;
+    float normY = avance / 512.0;
+    float normX = giroRaw / 512.0;
 
     // Mezcla diferencial normal
-    // Acá tener en cuenta que para la Bestia 1.0 y versiones anteriores puede que haya que invertir 
-    // los signos de pwmIzq y pwmDer.
-
     float pwmIzq = (normY + normX) * 127.0 * factorVelocidad;
     float pwmDer = (normY - normX) * 127.0 * factorVelocidad;
 
-    // Movimiento normal respeta PWM_MAX
-    pwmIzq = constrain(pwmIzq,-PWM_MAX,PWM_MAX);
-    pwmDer = constrain(pwmDer,-PWM_MAX,PWM_MAX);
+    // Limitar al valor PWM Máximo configurado en el perfil activo
+    pwmIzq = constrain(pwmIzq, (float)-perfilActivo.pwmMax, (float)perfilActivo.pwmMax);
+    pwmDer = constrain(pwmDer, (float)-perfilActivo.pwmMax, (float)perfilActivo.pwmMax);
 
-    // Variables de los motores
-    int adelanteIzq = 0;
-    int atrasIzq = 0;
+    int adelanteIzq = 0, atrasIzq = 0;
+    int adelanteDer = 0, atrasDer = 0;
 
-    int adelanteDer = 0;
-    int atrasDer = 0;
-
-    // MOTOR IZQUIERDO
+    // Motor Izquierdo
     if (pwmIzq >= 0) {
-        adelanteIzq = constrain((int)pwmIzq + K_IZQ,0,255);
+        adelanteIzq = constrain((int)pwmIzq + perfilActivo.kIzq, 0, 255);
     } else {
-        atrasIzq = constrain((int)(-pwmIzq) + K_IZQ,0,255);
+        atrasIzq = constrain((int)(-pwmIzq) + perfilActivo.kIzq, 0, 255);
     }
 
-    // MOTOR DERECHO
+    // Motor Derecho
     if (pwmDer >= 0) {
-        adelanteDer = constrain((int)pwmDer + K_DER, 0, 255);
+        adelanteDer = constrain((int)pwmDer + perfilActivo.kDer, 0, 255);
     } else {
-        atrasDer = constrain((int)(-pwmDer) + K_DER, 0, 255);
+        atrasDer = constrain((int)(-pwmDer) + perfilActivo.kDer, 0, 255);
     }
 
-    escribirPWM(
-        adelanteIzq,
-        atrasIzq,
-        adelanteDer,
-        atrasDer
-    );
+    escribirPWM(adelanteIzq, atrasIzq, adelanteDer, atrasDer);
 }
+
 
 // ====== ACCESS POINT ======
 void iniciarAccessPoint(bool temporal) {
@@ -354,4 +365,79 @@ void escribirPWM (int adelanteIzq, int atrasIzq, int adelanteDer, int atrasDer) 
     ledcWrite(CH_ATRAS_IZQ, atrasIzq);
     ledcWrite(CH_ADELANTE_DER, adelanteDer);
     ledcWrite(CH_ATRAS_DER, atrasDer);
+}
+
+// Las siguientes funciones permiten cargar y guardar los perfiles de la web:
+PerfilConfig perfilActivo;
+int perfilActualID = 0;
+
+#include <Preferences.h>
+
+void guardarPerfil(int id, PerfilConfig p) {
+    Preferences prefs;
+    prefs.begin("perfiles", false);
+
+    String key = "p_" + String(id) + "_";
+    prefs.putString((key + "nom").c_str(), p.nombre);
+    prefs.putInt((key + "pwm").c_str(), p.pwmMax);
+    prefs.putInt((key + "ki").c_str(), p.kIzq);
+    prefs.putInt((key + "kd").c_str(), p.kDer);
+    prefs.putInt((key + "ang").c_str(), p.anguloGiro);
+    prefs.putBool((key + "ix").c_str(), p.invertirEjeX);
+    prefs.putBool((key + "iy").c_str(), p.invertirEjeY);
+    prefs.putInt((key + "zm").c_str(), p.zonaMuerta);
+    prefs.putInt((key + "ba").c_str(), p.btnAdelante);
+    prefs.putInt((key + "bb").c_str(), p.btnAtras);
+    prefs.putInt((key + "bi").c_str(), p.btnIzq);
+    prefs.putInt((key + "bd").c_str(), p.btnDer);
+
+    // 📍 GUARDAR NUEVOS CAMPOS
+    prefs.putFloat((key + "kg").c_str(), p.kGiro);
+    prefs.putInt((key + "sg").c_str(), p.stickGiro);
+
+    int total = prefs.getInt("total", 1);
+    if (id + 1 > total) prefs.putInt("total", id + 1);
+
+    prefs.putInt("activo", id);
+    prefs.end();
+    perfilActualID = id;
+}
+
+void cargarPerfil(int id) {
+    Preferences prefs;
+    prefs.begin("perfiles", true);
+
+    String key = "p_" + String(id) + "_";
+    String nombreDefecto = "Perfil " + String(id + 1);
+    String nom = prefs.getString((key + "nom").c_str(), nombreDefecto.c_str());
+    snprintf(perfilActivo.nombre, sizeof(perfilActivo.nombre), "%s", nom.c_str());
+
+    perfilActivo.pwmMax = prefs.getInt((key + "pwm").c_str(), 220);
+    perfilActivo.kIzq = prefs.getInt((key + "ki").c_str(), 0);
+    perfilActivo.kDer = prefs.getInt((key + "kd").c_str(), 0);
+    perfilActivo.anguloGiro = prefs.getInt((key + "ang").c_str(), 180);
+    perfilActivo.invertirEjeX = prefs.getBool((key + "ix").c_str(), false);
+    perfilActivo.invertirEjeY = prefs.getBool((key + "iy").c_str(), false);
+    perfilActivo.zonaMuerta = prefs.getInt((key + "zm").c_str(), 10);
+    perfilActivo.btnAdelante = prefs.getInt((key + "ba").c_str(), 1);
+    perfilActivo.btnAtras = prefs.getInt((key + "bb").c_str(), 2);
+    perfilActivo.btnIzq = prefs.getInt((key + "bi").c_str(), 3);
+    perfilActivo.btnDer = prefs.getInt((key + "bd").c_str(), 4);
+
+    // 📍 CARGAR NUEVOS CAMPOS CON VALORES POR DEFECTO
+    perfilActivo.kGiro = prefs.getFloat((key + "kg").c_str(), 1.0f);
+    perfilActivo.stickGiro = prefs.getInt((key + "sg").c_str(), 0); // Default: Izquierdo
+
+    perfilActualID = id;
+    prefs.end();
+}
+
+// Tarea dedicada al Servidor Web en Core 0
+void TaskWebServer(void *pvParameters) {
+    for (;;) {
+        if (apActivo) {
+            server.handleClient();
+        }
+        vTaskDelay(2 / portTICK_PERIOD_MS); // Pequeña pausa para no saturar el kernel
+    }
 }

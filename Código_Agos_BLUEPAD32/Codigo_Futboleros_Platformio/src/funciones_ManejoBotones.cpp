@@ -174,3 +174,40 @@ void antiReboteCuad (ControllerPtr ctl){
     ultimoCuadrado = millis();
   }
 }
+
+// Función auxiliar para mapear el mando en la web:
+// para consultar si un botón específico mapeado está presionado
+bool estaBotonPresionado(ControllerPtr ctl, uint8_t botonID) {
+    switch (botonID) {
+        case BOTON_Y:  return ctl->y();
+        case BOTON_A:  return ctl->a();
+        case BOTON_B:  return ctl->b();
+        case BOTON_X:  return ctl->x();
+        case BOTON_L1: return ctl->l1();
+        case BOTON_R1: return ctl->r1();
+        case BOTON_L2: return ctl->brake() > 0;
+        case BOTON_R2: return ctl->throttle() > 0;
+        default: return false;
+    }
+}
+
+void procesarBotonesDinamicos(ControllerPtr ctl) {
+    static unsigned long ultimoBoton = 0;
+    const unsigned long tiempoRebote = 200;
+
+    if (millis() - ultimoBoton < tiempoRebote) return;
+
+    if (estaBotonPresionado(ctl, perfilActivo.btnAdelante)) {
+        adelante();
+        ultimoBoton = millis();
+    } else if (estaBotonPresionado(ctl, perfilActivo.btnAtras)) {
+        atras();
+        ultimoBoton = millis();
+    } else if (estaBotonPresionado(ctl, perfilActivo.btnIzq)) {
+        izquierda();
+        ultimoBoton = millis();
+    } else if (estaBotonPresionado(ctl, perfilActivo.btnDer)) {
+        derecha();
+        ultimoBoton = millis();
+    }
+}

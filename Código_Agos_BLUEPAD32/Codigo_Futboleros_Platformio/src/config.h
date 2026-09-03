@@ -139,3 +139,42 @@ extern uint8_t pwmMaxConfigurado;
 
 // WEB SERVER
 extern WebServer server;
+
+// Estructuras y variables para el manejo de perfiles de configuración en la web:
+// IDs de Botones soportados para mapeo
+enum BotonAccion {
+    BOTON_NINGUNO = 0,
+    BOTON_Y = 1,       // Triángulo / Y
+    BOTON_A = 2,       // Cruz / A
+    BOTON_B = 3,       // Círculo / B
+    BOTON_X = 4,       // Cuadrado / X
+    BOTON_L1 = 5,
+    BOTON_R1 = 6,
+    BOTON_L2 = 7,
+    BOTON_R2 = 8
+};
+
+struct PerfilConfig {
+    char nombre[30];
+    int pwmMax;
+    int kIzq;
+    int kDer;
+    int anguloGiro;
+    bool invertirEjeX;
+    bool invertirEjeY;
+    int zonaMuerta;
+    int btnAdelante;
+    int btnAtras;
+    int btnIzq;
+    int btnDer;
+    
+    // 📍 NUEVOS CAMPOS:
+    float kGiro;      // Multiplicador/Constante para la corrección del turbo (ej. 0.5 a 2.0)
+    int stickGiro;    // 0 = Stick Izquierdo, 1 = Stick Derecho
+};
+
+extern int perfilActualID;
+extern int totalPerfilesGuardados;
+
+extern PerfilConfig perfilActivo;
+extern int perfilActualID;

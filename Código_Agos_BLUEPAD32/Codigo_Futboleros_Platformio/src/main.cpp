@@ -12,10 +12,9 @@
 // ========================================================================
 
 void setup() {
-// Inicialización del monitor Serial
     Serial.begin(115200);
 
-// ================= ADC BATERÍA =================
+    // ================= ADC BATERÍA =================
     pinMode(PIN_BATERIA, INPUT);
     analogReadResolution(12);
     inicioHistorial = millis();
@@ -25,901 +24,736 @@ void setup() {
         historialTiempo[i] = 0;
     }
 
-// Permite cargar la configuración previa de motores
-// en la página para que al abrirla permita ver los parámetros 
-// actuales.
     cargarConfiguracionMotores();
 
-// Pines PWM
-// Configurar canales PWM:
+    // Cargar último perfil activo al iniciar
+    Preferences prefs;
+    prefs.begin("perfiles", true);
+    int ultimoPerfil = prefs.getInt("activo", 0);
+    prefs.end();
+    cargarPerfil(ultimoPerfil);
+
+    // Pines PWM
     ledcSetup(CH_ADELANTE_DER, PWM_FREQ, PWM_RES);
     ledcSetup(CH_ATRAS_DER, PWM_FREQ, PWM_RES);
     ledcSetup(CH_ADELANTE_IZQ, PWM_FREQ, PWM_RES);
     ledcSetup(CH_ATRAS_IZQ, PWM_FREQ, PWM_RES);
 
-// Asociar pines a canales:
     ledcAttachPin(Adelante_Der, CH_ADELANTE_DER);
     ledcAttachPin(Atras_Der, CH_ATRAS_DER);
     ledcAttachPin(Adelante_Izq, CH_ADELANTE_IZQ);
     ledcAttachPin(Atras_Izq, CH_ATRAS_IZQ);
 
-// Pin del LED:
     pinMode(PIN_LED, OUTPUT);
 
-// Configuración para conexión de mandos:
-    //Serial.printf("Firmware: %s\n", BP32.firmwareVersion());
-    const uint8_t* addr = BP32.localBdAddress();
-    //Serial.printf("BD Addr: %2X:%2X:%2X:%2X:%2X:%2X\n", addr[0], addr[1], addr[2], addr[3], addr[4], addr[5]);
-
-// ================= WIFI AP =================
+    // ================= WIFI AP =================
     iniciarAccessPoint(true);
 
-// ================= CARGAR WHITELIST =================
-// La WHitelist permite en realidad generar una lista de mandos
-// "permitidos", sin embargo, en este código en la Web debemos autorizar
-// cada mando y borrar la whitelist al emparejar otro .... se prefirió evitar 
-// dos mandos que controlen un mismo robot.
-
+    // ================= WHITELIST =================
     prefs.begin("gamepad", true);
-
     if (prefs.isKey("mac")) {
         prefs.getBytes("mac", allowedController, 6);
         whitelistEnabled = true;
         char macStr[18];
-    
-        sprintf(macStr, "%02X:%02X:%02X:%02X:%02X:%02X", allowedController[0], allowedController[1], 
-            allowedController[2], allowedController[3], allowedController[4], allowedController[5]
-        );
-
+        sprintf(macStr, "%02X:%02X:%02X:%02X:%02X:%02X", 
+                allowedController[0], allowedController[1], allowedController[2], 
+                allowedController[3], allowedController[4], allowedController[5]);
         authorizedGamepad = String(macStr);
-        Serial.println("MAC cargada:");
-        Serial.println(authorizedGamepad);
     }
-
     prefs.end();
 
-// ================= WEB =================
+    // ================= SERVIDOR WEB =================
     server.on("/", []() {
-    
-    String html = R"rawliteral(
-    <!DOCTYPE html>
-    <html>
+        String html = R"rawliteral(
+        <!DOCTYPE html>
+        <html lang="es">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Robot Futbolero</title>
+            <style>
+                * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+                body { margin: 0; padding: 20px 10px; background: #0b0e14; color: #e1e7ec; display: flex; justify-content: center; }
+                .container { width: 100%; max-width: 520px; }
+                
+                .header-title { text-align: center; font-size: 28px; font-weight: 800; color: #00d4ff; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 20px; text-shadow: 0 0 10px rgba(0,212,255,0.3); }
+                
+                .card { background: #161b22; border-radius: 16px; padding: 20px; margin-bottom: 20px; border: 1px solid #21262d; box-shadow: 0 8px 24px rgba(0,0,0,0.5); }
+                .card-title { font-size: 16px; font-weight: 700; color: #58a6ff; text-transform: uppercase; letter-spacing: 1px; margin-top: 0; margin-bottom: 15px; border-bottom: 1px solid #30363d; padding-bottom: 8px; }
+                
+                .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+                .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+                
+                .config-item { margin-top: 12px; }
+                .config-item label { display: block; font-size: 13px; color: #8b949e; margin-bottom: 6px; font-weight: 600; }
+                .config-item input, .config-item select { width: 100%; border: 1px solid #30363d; border-radius: 8px; padding: 12px; font-size: 14px; background: #0d1117; color: #c9d1d9; outline: none; transition: 0.2s; }
+                .config-item input:focus, .config-item select:focus { border-color: #58a6ff; box-shadow: 0 0 0 3px rgba(88,166,255,0.15); }
+                
+                .checkbox-item { display: flex; align-items: center; gap: 10px; margin-top: 12px; cursor: pointer; }
+                .checkbox-item input { width: 18px; height: 18px; accent-color: #00d4ff; }
+                .checkbox-item label { font-size: 14px; color: #c9d1d9; cursor: pointer; }
 
-    <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Robot Futbolero</title>
+                button { width: 100%; border: none; border-radius: 10px; padding: 12px 8px; font-size: 13px; font-weight: 700; margin-top: 12px; cursor: pointer; transition: all 0.2s; text-transform: uppercase; letter-spacing: 0.5px; }
+                button:active { transform: scale(0.97); }
+                
+                .btn-primary { background: #238636; color: #fff; }
+                .btn-primary:hover { background: #2ea043; }
+                .btn-sec { background: #1f6feb; color: #fff; }
+                .btn-danger { background: #da3633; color: #fff; }
+                .btn-purple { background: #8957e5; color: #fff; }
+                .btn-teal { background: #117ca6; color: #fff; }
 
-<!-- Comentario: el Style es para configurar el estilo de la página web-->
-    <style>
-    .config-item select{
-        width:100%;
-        box-sizing:border-box;
-        border:none;
-        border-radius:14px;
-        padding:14px;
-        font-size:18px;
-        background:#1c1f26;
-        color:white;
-        outline:none;
-    }
+                .voltage-num { text-align: center; font-size: 42px; font-weight: 800; color: #3fb950; margin: 10px 0; font-family: monospace; }
+                .message { text-align: center; margin-top: 12px; font-size: 13px; font-weight: 600; color: #58a6ff; min-height: 18px; }
+                .footer { text-align: center; font-size: 12px; color: #484f58; margin-top: 20px; }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header-title">Robot Futbolero</div>
 
-    .config-item select:focus{
-        box-shadow:0 0 0 2px #00d4ff;
-    }
+                <!-- BATERÍA -->
+                <div class="card">
+                    <div class="card-title">Estado de Batería</div>
+                    <div class="voltage-num" id="voltajeBateria">-- V</div>
+                    <canvas id="graficoBateria" width="400" height="160" style="width:100%;"></canvas>
+                </div>
 
-    .giro-botones{
-        display:flex;
-        gap:10px;
-        margin-top:10px;
-    }
+                <!-- GESTIÓN DE PERFILES -->
+                <div class="card">
+                    <div class="card-title">Gestión de Perfiles</div>
+                    <div class="config-item">
+                        <label>Seleccionar Perfil Activo</label>
+                        <select id="selectPerfil" onchange="cambiarPerfilWeb(this.value)">
+                        </select>
+                    </div>
+                    
+                    <div class="config-item" id="seccionNuevoNombre" style="display:none;">
+                        <label>Nombre del Nuevo Perfil</label>
+                        <input type="text" id="nombrePerfilNuevo" placeholder="Ej: Ataque Rapido">
+                    </div>
 
-    .giro-botones button{
-        width:50%;
-    }
+                    <div class="grid-3">
+                        <button class="btn-sec" onclick="mostrarCrearPerfil()">+ Nuevo</button>
+                        <button class="btn-primary" onclick="guardarPerfilWeb()">Guardar</button>
+                        <button class="btn-danger" onclick="eliminarPerfilWeb()">Eliminar</button>
+                    </div>
+                    <div id="mensajeConfig" class="message"></div>
+                </div>
 
-    .giro-izq{
-        background:#7c4dff;
-        color:white;
-    }
+                <!-- CONFIGURACIÓN DE STICK Y BOTONES -->
+                <div class="card">
+                    <div class="card-title">Ajustes de Control</div>
+                    <div class="grid-2">
+                        <div class="config-item">
+                            <label>Factor Corrección Giro (kGiro)</label>
+                            <input type="number" id="kGiro" step="0.05" min="0" max="3" value="1.0">
+                        </div>
+                        <div class="config-item">
+                            <label>Stick para Corrección Giro</label>
+                            <select id="stickGiro">
+                                <option value="0">Stick Izquierdo (X)</option>
+                                <option value="1">Stick Derecho (RX)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="invX">
+                        <label for="invX">Invertir Giro Stick (Eje X)</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="invY">
+                        <label for="invY">Invertir Avance Stick (Eje Y)</label>
+                    </div>
+                    <div class="config-item">
+                        <label>Zona Muerta Stick (1 a 50)</label>
+                        <input type="number" id="zonaMuerta" min="1" max="50" value="10">
+                    </div>
 
-    .giro-der{
-        background:#00bfa5;
-        color:white;
-    }
+                    <div class="card-title" style="margin-top:20px;">Mapeo de Botones</div>
+                    <div class="grid-2">
+                        <div class="config-item">
+                            <label>⬆️ Adelante</label>
+                            <select id="btnF">
+                                <option value="1">Y / Triángulo</option>
+                                <option value="2">A / Cruz</option>
+                                <option value="3">B / Círculo</option>
+                                <option value="4">X / Cuadrado</option>
+                                <option value="5">L1</option>
+                                <option value="6">R1</option>
+                            </select>
+                        </div>
+                        <div class="config-item">
+                            <label>⬇️ Atrás</label>
+                            <select id="btnB">
+                                <option value="1">Y / Triángulo</option>
+                                <option value="2">A / Cruz</option>
+                                <option value="3">B / Círculo</option>
+                                <option value="4">X / Cuadrado</option>
+                                <option value="5">L1</option>
+                                <option value="6">R1</option>
+                            </select>
+                        </div>
+                        <div class="config-item">
+                            <label>⬅️ Izquierda</label>
+                            <select id="btnL">
+                                <option value="1">Y / Triángulo</option>
+                                <option value="2">A / Cruz</option>
+                                <option value="3">B / Círculo</option>
+                                <option value="4">X / Cuadrado</option>
+                                <option value="5">L1</option>
+                                <option value="6">R1</option>
+                            </select>
+                        </div>
+                        <div class="config-item">
+                            <label>➡️ Derecha</label>
+                            <select id="btnR">
+                                <option value="1">Y / Triángulo</option>
+                                <option value="2">A / Cruz</option>
+                                <option value="3">B / Círculo</option>
+                                <option value="4">X / Cuadrado</option>
+                                <option value="5">L1</option>
+                                <option value="6">R1</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
 
-    body{
-        margin:0;
-        padding:0;
-        background:#0f1117;
-        color:white;
-        font-family:Arial;
-    }
+                <!-- CALIBRACIÓN Y TEST -->
+                <div class="card">
+                    <div class="card-title">Calibración de Motores</div>
+                    <div class="config-item">
+                        <label>PWM Máximo (0 - 255)</label>
+                        <input type="number" id="pwmMax" min="0" max="255" value="220">
+                    </div>
+                    <div class="grid-2">
+                        <div class="config-item">
+                            <label>K Izquierdo</label>
+                            <input type="number" id="kIzq" min="0" max="255" value="0">
+                        </div>
+                        <div class="config-item">
+                            <label>K Derecho</label>
+                            <input type="number" id="kDer" min="0" max="255" value="0">
+                        </div>
+                    </div>
 
-    .container{
-        width:90%;
-        max-width:500px;
-        margin:auto;
-        margin-top:40px;
-    }
+                    <div class="card-title" style="margin-top:20px;">Prueba de Giro</div>
+                    <div class="config-item">
+                        <label>Ángulo de Giro</label>
+                        <select id="anguloGiro">
+                            <option value="45">45°</option>
+                            <option value="90">90°</option>
+                            <option value="180" selected>180°</option>
+                            <option value="270">270°</option>
+                            <option value="360">360°</option>
+                        </select>
+                    </div>
+                    <div class="grid-2">
+                        <button class="btn-purple" onclick="girar('izquierda')">Girar Izq</button>
+                        <button class="btn-teal" onclick="girar('derecha')">Girar Der</button>
+                    </div>
+                    <div id="mensajeGiro" class="message"></div>
+                </div>
 
-    .card{
-        background:#1c1f26;
-        border-radius:25px;
-        padding:25px;
-        box-shadow:0 0 25px rgba(0,0,0,0.4);
-    }
-
-    .title{
-        text-align:center;
-        font-size:34px;
-        font-weight:bold;
-        color:#00d4ff;
-        margin-bottom:25px;
-    }
-
-    .status{
-        background:#2a2f3a;
-        border-radius:18px;
-        padding:18px;
-        margin-top:15px;
-    }
-
-    .status h2{
-        margin:0;
-        font-size:20px;
-        color:#b0bec5;
-    }
-
-    .status p{
-        margin-top:10px;
-        font-size:18px;
-        word-break:break-all;
-    }
-
-    button{
-        width:100%;
-        border:none;
-        border-radius:18px;
-        padding:18px;
-        font-size:18px;
-        font-weight:bold;
-        margin-top:18px;
-        cursor:pointer;
-        transition:0.2s;
-    }
-
-    button:hover{
-        transform:scale(1.02);
-    }
-
-    .pair{
-        background:#00c853;
-        color:white;
-    }
-
-    .disconnect{
-        background:#ff9800;
-        color:white;
-    }
-
-    .clear{
-        background:#ff5252;
-        color:white;
-    }
-
-    .refresh{
-        background:#2979ff;
-        color:white;
-    }
-    .config-title{
-        margin-top:30px;
-        margin-bottom:10px;
-        font-size:22px;
-    }
-
-    .config-item{
-        margin-top:18px;
-    }
-
-    .config-item label{
-        display:block;
-        margin-bottom:8px;
-        font-size:16px;
-        color:#b0bec5;
-    }
-
-    .config-item input{
-        width:100%;
-        box-sizing:border-box;
-        border:none;
-        border-radius:14px;
-        padding:14px;
-        font-size:18px;
-        background:#1c1f26;
-        color:white;
-        outline:none;
-    }
-
-    .config-item input:focus{
-        box-shadow:0 0 0 2px #00d4ff;
-    }
-
-    .save{
-        background:#00c853;
-        color:white;
-    }
-
-    .motor{
-        display:flex;
-        justify-content:space-between;
-        align-items:center;
-        margin-top:12px;
-    }
-
-    .motor-value{
-        font-size:20px;
-        font-weight:bold;
-        color:#00d4ff;
-    }
-
-    .motor-direction{
-        font-size:15px;
-        color:#b0bec5;
-    }
-
-    .message{
-        text-align:center;
-        margin-top:15px;
-        color:#00d4ff;
-    }
-
-    .footer{
-        text-align:center;
-        margin-top:25px;
-        color:#777;
-        font-size:14px;
-    }
-
-    </style>
-    </head>
-
-
-    <body>
-    <div class="container">
-    <div class="card">
-
-    <div class="title">
-    Robot Futbolero
-    </div>
-
-    <div class="status">
-
-    <!-- Comentario: Esta parte es la que se encarga de mostrar el nivel de batería -->
-        <h2>Bateria</h2>
-
-        <div style=" text-align:center; font-size:42px; font-weight:bold; color:#00d4ff; margin-top:15px; " id="voltajeBateria">
-            -- V
-        </div>
-
-        <div style=" text-align:center; color:#b0bec5; margin-top:5px;">
-            Tensión medida por ADC
-        </div>
-    </div>
-
-<!-- Comentario: Esta parte es la que se encarga de mostrar el nivel de batería en el gráfico -->
-    <div class="status">
-        <h2>Historial de bateria</h2>
-        <canvas id="graficoBateria" width="400" height="220" style="width:100%;"> </canvas>
-    </div>
-
-<!-- Comentario: Esta parte autoriza los mandos -->
-    <div class="status">
-
-        <h2>Joystick autorizado</h2>
-
-        <p>
+                <!-- MANDOS CONECTADOS -->
+                <div class="card">
+                    <div class="card-title">Joystick Autorizado</div>
+                    <p style="word-break:break-all; color:#58a6ff; margin:0; font-family:monospace;">
         )rawliteral";
         html += authorizedGamepad;
         html += R"rawliteral(
-        </p>
-
-    </div>
-
-    )rawliteral";
-
-    html += "<h2>Mandos conectados</h2>";
-
-    for(int i = 0; i < BP32_MAX_GAMEPADS; i++){
-
-        if(gamepads[i].connected){
-
-            html += "<div class='status'>";
-
-            html += "<p><b>";
-            html += gamepads[i].name;
-            html += "</b></p>";
-
-            html += "<p>";
-            html += gamepads[i].mac;
-            html += "</p>";
-
-            html += "<button class='pair' onclick=\"fetch('/authorize?id=";
-            html += String(i);
-            html += "').then(()=>location.reload())\">Autorizar</button>";
-
-            html += "<button class='disconnect' onclick=\"fetch('/disconnect?id=";
-            html += String(i);
-            html += "').then(()=>location.reload())\">Desconectar</button>";
-
-            html += "</div>";
-        }
-    }
-    
-
-    html += R"rawliteral(
-
-<!-- Comentario: Esta parte es la de los botones de borrar la whitelist y actualizar -->
-    <button class="clear" onclick="fetch('/clear').then(()=>location.reload())">
-        Borrar whitelist
-    </button>
-
-    <button class="refresh" onclick="location.reload()">
-        Actualizar
-    </button>
-    
-<!-- Comentario: Esta parte es la que se encarga de mostrar y actualizar la configuración -->
-<div class="status">
-
-    <h2>Configuracion de giro</h2>
-        <div class="config-item">
-
-            <label>Angulo de giro</label>
-            <select id="anguloGiro">
-                <option value="45">45</option>
-                <option value="90">90</option>
-                <option value="180" selected>180</option>
-                <option value="270">270</option>
-                <option value="360">360</option>
-            </select>
-
-        </div>
-
-        <div class="giro-botones">
-
-            <button class="giro-izq" onclick="girar('izquierda')">
-                Girar izquierda
-            </button>
-
-            <button class="giro-der" onclick="girar('derecha')">
-                Girar derecha
-            </button>
-
-        </div>
-
-    <div id="mensajeGiro" class="message"></div>
-
-        <h2>Calibracion de motores</h2>
-
-            <div class="config-item">
-                <label>PWM maximo</label>
-                <input type="number" id="pwmMax" min="0" max="255" value="220">
-            </div>
-
-            <div class="config-item">
-                <label>K izquierdo</label>
-                <input type="number" id="kIzq" min="0" max="255" value="0">
-            </div>
-
-            <div class="config-item">
-                <label>K derecho</label>
-                <input type="number" id="kDer" min="0" max="255" value="0">
-            </div>
-
-            <button
-                class="save"
-                onclick="guardarMotores()">
-                Guardar configuración
-            </button>
-
-         <div id="mensajeConfig" class="message"></div>
-    </div>
-
-    <div class="footer">
-        ESP32 + Bluepad32
-    </div>
-    </div>
-    </div>
-
-<!-- Comentario: Esta parte es la del JavaScript que da las funcionalidades para guardar parámetros y comunicar las acciones de la web con la ESP -->
-    <script>
-        function girar(direccion){
-
-            const angulo =
-                document.getElementById("anguloGiro").value;
-
-            const url =
-                "/girar" +
-                "?direccion=" + direccion +
-                "&angulo=" + angulo;
-
-            fetch(url)
-
-            .then(response => response.text())
-
-            .then(data => {
-
-                document.getElementById("mensajeGiro").innerText =
-                    "✓ " + data;
-
-            })
-
-            .catch(error => {
-                document.getElementById("mensajeGiro").innerText =
-                    "✗ Error al realizar el giro";
-
-                console.log(error);
-            });
-        }
-
-        function cargarConfiguracion(){
-
-            fetch('/config')
-            .then(response => response.json())
-
-            .then(data => {
-
-                document.getElementById("pwmMax").value = data.pwmMax;
-                document.getElementById("kIzq").value = data.kIzq;
-                document.getElementById("kDer").value = data.kDer;
-                document.getElementById("anguloGiro").value = data.anguloGiro;
-
-            })
-
-            .catch(error => {
-                console.log("Error cargando configuración:", error);
-            });
-        }
-
-        function guardarMotores(){
-
-            const pwmMax = document.getElementById("pwmMax").value;
-
-            const kIzq = document.getElementById("kIzq").value;
-
-            const kDer = document.getElementById("kDer").value;
-
-            const anguloGiro = document.getElementById("anguloGiro").value;
-
-            const url = "/guardar" + "?pwmMax=" + pwmMax + "&kIzq=" + kIzq + "&kDer=" + kDer + "&anguloGiro=" + anguloGiro;
-
-            fetch(url)
-            .then(response => response.text())
-
-            .then(data => {
-                document.getElementById("mensajeConfig").innerText =
-                    "✓ Configuración guardada";
-
-            })
-
-            .catch(error => {
-                document.getElementById("mensajeConfig").innerText =
-                    "✗ Error al guardar";
-
-                console.log(error);
-
-            });
-
-        }
-
-        function actualizarBateria() {
-
-            fetch('/bateria')
-            .then(response => response.json())
-
-            .then(data => {
-                document.getElementById("voltajeBateria").innerText =
-                    data.voltaje.toFixed(2) + " V";
-
-                dibujarGrafico(data.historial);
-            })
-
-            .catch(error => {
-                console.log(
-                    "Error leyendo batería:",
-                    error
-                );
-            });
-        }
-
-        function dibujarGrafico(datos) {
-
-            const canvas = document.getElementById("graficoBateria");
-
-            const ctx = canvas.getContext("2d");
-
-            const ancho = canvas.width;
-            const alto = canvas.height;
-
-            ctx.clearRect(0, 0, ancho, alto);
-
-            if (datos.length < 2) {
-                return;
+                    </p>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">Mandos Detectados</div>
+        )rawliteral";
+
+        for (int i = 0; i < BP32_MAX_GAMEPADS; i++) {
+            if (gamepads[i].connected) {
+                html += "<div style='margin-bottom:10px;'><b>" + String(gamepads[i].name) + "</b> (" + String(gamepads[i].mac) + ")</div>";
+                html += "<div class='grid-2'>";
+                html += "<button class='btn-primary' onclick=\"fetch('/authorize?id=" + String(i) + "').then(()=>location.reload())\">Autorizar</button>";
+                html += "<button class='btn-danger' onclick=\"fetch('/disconnect?id=" + String(i) + "').then(()=>location.reload())\">Desconectar</button>";
+                html += "</div>";
             }
+        }
 
-            // =========================================
-            // BUSCAR MIN / MAX
-            // =========================================
+        html += R"rawliteral(
+                    <div class="grid-2" style="margin-top:15px;">
+                        <button class="btn-danger" onclick="fetch('/clear').then(()=>location.reload())">Borrar Whitelist</button>
+                        <button class="btn-sec" onclick="location.reload()">Actualizar</button>
+                    </div>
+                </div>
 
-            let minV = datos[0].v;
-            let maxV = datos[0].v;
+                <div class="footer">ESP32 + Bluepad32 Control System</div>
+            </div>
 
-            datos.forEach(p => {
+            <script>
+                let creandoNuevo = false;
 
-                if (p.v < minV)
-                    minV = p.v;
+                window.onload = function() {
+                    cargarListaPerfiles();
+                    actualizarBateria();
+                    setInterval(actualizarBateria, 2000);
+                };
 
-                if (p.v > maxV)
-                    maxV = p.v;
-
-            });
-
-
-            // Un poco de margen vertical
-            minV -= 0.1;
-            maxV += 0.1;
-
-            if (maxV - minV < 0.5) {
-                const centro = (maxV + minV) / 2;
-                minV = centro - 0.25;
-                maxV = centro + 0.25;
-            }
-
-            // =========================================
-            // EJES
-            // =========================================
-
-            ctx.beginPath();
-
-            ctx.moveTo(40, 10);
-            ctx.lineTo(40, alto - 30);
-            ctx.lineTo(ancho - 10, alto - 30);
-
-            ctx.stroke();
-
-
-            // =========================================
-            // TEXTO MIN / MAX
-            // =========================================
-
-            ctx.font = "12px Arial";
-            ctx.fillText(maxV.toFixed(1) + " V", 5, 15);
-            ctx.fillText(minV.toFixed(1) + " V", 5, alto - 35);
-
-            // =========================================
-            // CURVA
-            // =========================================
-
-            ctx.beginPath();
-
-            datos.forEach((p, i) => {
-
-                let x = 40 + (i / (datos.length - 1)) * (ancho - 50);
-
-                let y = (alto - 30) - ((p.v - minV) / (maxV - minV)) * (alto - 40);
-
-
-                if (i === 0) {
-                    ctx.moveTo(x, y);
-                } else {
-                    ctx.lineTo(x, y);
+                function cargarListaPerfiles() {
+                    fetch('/listarPerfiles')
+                    .then(r => r.json())
+                    .then(data => {
+                        const select = document.getElementById("selectPerfil");
+                        select.innerHTML = "";
+                        data.perfiles.forEach(p => {
+                            const opt = document.createElement("option");
+                            opt.value = p.id;
+                            opt.text = "⭐ " + p.nombre;
+                            select.add(opt);
+                        });
+                        select.value = data.activo;
+                        cambiarPerfilWeb(data.activo);
+                    });
                 }
 
-            });
+                function mostrarCrearPerfil() {
+                    creandoNuevo = true;
+                    document.getElementById("seccionNuevoNombre").style.display = "block";
+                    document.getElementById("nombrePerfilNuevo").value = "";
+                    document.getElementById("nombrePerfilNuevo").focus();
+                    document.getElementById("mensajeConfig").innerText = "Ingresa el nombre y presiona Guardar";
+                }
 
-            // COLOR DE LA LÍNEA
-            ctx.strokeStyle = "#00d4ff";
-            ctx.lineWidth = 2;
-            ctx.stroke();
+                function cambiarPerfilWeb(idPerfil) {
+                    creandoNuevo = false;
+                    document.getElementById("seccionNuevoNombre").style.display = "none";
+                    fetch('/getPerfil?id=' + idPerfil)
+                    .then(response => response.json())
+                    .then(data => {
+                        document.getElementById("pwmMax").value = data.pwmMax;
+                        document.getElementById("kIzq").value = data.kIzq;
+                        document.getElementById("kDer").value = data.kDer;
+                        document.getElementById("anguloGiro").value = data.anguloGiro;
 
-            // =========================================
-            // INFORMACIÓN
-            // =========================================
+                        document.getElementById("invX").checked = data.invX === 1;
+                        document.getElementById("invY").checked = data.invY === 1;
+                        document.getElementById("zonaMuerta").value = data.zm;
 
-            ctx.fillText("Min: " + minV.toFixed(2) + " V", 50, alto - 10);
-            ctx.fillText("Max: " + maxV.toFixed(2) + " V", 160, alto - 10);
+                        document.getElementById("btnF").value = data.btnF;
+                        document.getElementById("btnB").value = data.btnB;
+                        document.getElementById("btnL").value = data.btnL;
+                        document.getElementById("btnR").value = data.btnR;
 
+                        document.getElementById("kGiro").value = data.kGiro;
+                        document.getElementById("stickGiro").value = data.stickGiro;
+
+                        document.getElementById("mensajeConfig").innerText = "✓ Perfil activo";
+                    });
+                }
+
+                function guardarPerfilWeb() {
+                    const select = document.getElementById("selectPerfil");
+                    let idPerfil = select.value;
+                    let nombrePerfil = "";
+
+                    if (creandoNuevo) {
+                        nombrePerfil = document.getElementById("nombrePerfilNuevo").value.trim();
+                        if (!nombrePerfil) {
+                            document.getElementById("mensajeConfig").innerText = "❌ Ingresa un nombre válido";
+                            return;
+                        }
+                        idPerfil = select.options.length;
+                    } else {
+                        nombrePerfil = select.options[select.selectedIndex].text.replace("⭐ ", "");
+                    }
+
+                    const pwmMax = document.getElementById("pwmMax").value;
+                    const kIzq = document.getElementById("kIzq").value;
+                    const kDer = document.getElementById("kDer").value;
+                    const anguloGiro = document.getElementById("anguloGiro").value;
+
+                    const invX = document.getElementById("invX").checked ? 1 : 0;
+                    const invY = document.getElementById("invY").checked ? 1 : 0;
+                    const zm = document.getElementById("zonaMuerta").value;
+
+                    const btnF = document.getElementById("btnF").value;
+                    const btnB = document.getElementById("btnB").value;
+                    const btnL = document.getElementById("btnL").value;
+                    const btnR = document.getElementById("btnR").value;
+
+                    const kGiro = document.getElementById("kGiro").value;
+                    const stickGiro = document.getElementById("stickGiro").value;
+
+                    const url = `/guardarPerfil?id=${idPerfil}&nombre=${encodeURIComponent(nombrePerfil)}&pwmMax=${pwmMax}&kIzq=${kIzq}&kDer=${kDer}&anguloGiro=${anguloGiro}&invX=${invX}&invY=${invY}&zm=${zm}&btnF=${btnF}&btnB=${btnB}&btnL=${btnL}&btnR=${btnR}&kGiro=${kGiro}&stickGiro=${stickGiro}`;
+                    
+                    fetch(url)
+                    .then(response => response.text())
+                    .then(data => {
+                        document.getElementById("mensajeConfig").innerText = "✓ Guardado con éxito";
+                        creandoNuevo = false;
+                        document.getElementById("seccionNuevoNombre").style.display = "none";
+                        cargarListaPerfiles();
+                    });
+                }
+
+                function eliminarPerfilWeb() {
+                    const select = document.getElementById("selectPerfil");
+                    if (select.options.length <= 1) {
+                        document.getElementById("mensajeConfig").innerText = "❌ No puedes borrar el único perfil";
+                        return;
+                    }
+
+                    const idPerfil = select.value;
+                    if (confirm("¿Estás seguro de eliminar este perfil?")) {
+                        fetch('/eliminarPerfil?id=' + idPerfil)
+                        .then(response => response.text())
+                        .then(data => {
+                            document.getElementById("mensajeConfig").innerText = "✓ Perfil eliminado";
+                            cargarListaPerfiles();
+                        });
+                    }
+                }
+
+                function girar(direccion) {
+                    const angulo = document.getElementById("anguloGiro").value;
+                    fetch(`/girar?direccion=${direccion}&angulo=${angulo}`)
+                    .then(response => response.text())
+                    .then(data => { document.getElementById("mensajeGiro").innerText = "✓ " + data; });
+                }
+
+                function actualizarBateria() {
+                    fetch('/bateria')
+                    .then(response => response.json())
+                    .then(data => {
+                        document.getElementById("voltajeBateria").innerText = data.voltaje.toFixed(2) + " V";
+                        dibujarGrafico(data.historial);
+                    });
+                }
+
+                function dibujarGrafico(datos) {
+                    const canvas = document.getElementById("graficoBateria");
+                    const ctx = canvas.getContext("2d");
+                    const ancho = canvas.width;
+                    const alto = canvas.height;
+
+                    ctx.clearRect(0, 0, ancho, alto);
+                    if (!datos || datos.length < 2) return;
+
+                    let minV = datos[0].v, maxV = datos[0].v;
+                    datos.forEach(p => {
+                        if (p.v < minV) minV = p.v;
+                        if (p.v > maxV) maxV = p.v;
+                    });
+
+                    minV -= 0.1; maxV += 0.1;
+                    if (maxV - minV < 0.5) {
+                        const centro = (maxV + minV) / 2;
+                        minV = centro - 0.25;
+                        maxV = centro + 0.25;
+                    }
+
+                    ctx.beginPath();
+                    ctx.strokeStyle = "#30363d";
+                    ctx.moveTo(35, 10); ctx.lineTo(35, alto - 25); ctx.lineTo(ancho - 10, alto - 25);
+                    ctx.stroke();
+
+                    ctx.fillStyle = "#8b949e";
+                    ctx.font = "11px Segoe UI";
+                    ctx.fillText(maxV.toFixed(1) + "V", 2, 15);
+                    ctx.fillText(minV.toFixed(1) + "V", 2, alto - 28);
+
+                    ctx.beginPath();
+                    datos.forEach((p, i) => {
+                        let x = 35 + (i / (datos.length - 1)) * (ancho - 45);
+                        let y = (alto - 25) - ((p.v - minV) / (maxV - minV)) * (alto - 35);
+                        if (i === 0) ctx.moveTo(x, y);
+                        else ctx.lineTo(x, y);
+                    });
+
+                    ctx.strokeStyle = "#3fb950";
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                }
+            </script>
+        </body>
+        </html>
+        )rawliteral";
+
+        server.send(200, "text/html", html);
+    });
+
+    // === RUTAS HTTP APIS ===
+    server.on("/authorize", []() {
+        if (server.hasArg("id")) {
+            int id = server.arg("id").toInt();
+            if (gamepads[id].connected) {
+                memcpy(allowedController, gamepads[id].ctl->getProperties().btaddr, 6);
+                Preferences prefs;
+                prefs.begin("gamepad", false);
+                prefs.putBytes("mac", allowedController, 6);
+                prefs.end();
+                whitelistEnabled = true;
+                authorizedGamepad = gamepads[id].mac;
+                server.send(200, "text/plain", "Autorizado");
+                return;
+            }
+        }
+        server.send(400, "text/plain", "Error");
+    });
+
+    server.on("/clear", []() {
+        Preferences prefs;
+        prefs.begin("gamepad", false);
+        prefs.clear();
+        prefs.end();
+        whitelistEnabled = false;
+        authorizedGamepad = "Ninguno";
+        server.send(200, "text/plain", "Whitelist borrada");
+    });
+
+    server.on("/disconnect", []() {
+        if (server.hasArg("id")) {
+            int id = server.arg("id").toInt();
+            if (gamepads[id].connected) {
+                gamepads[id].ctl->disconnect();
+                server.send(200, "text/plain", "Desconectado");
+                return;
+            }
+        }
+        server.send(400, "text/plain", "Error");
+    });
+
+    server.on("/listarPerfiles", HTTP_GET, []() {
+        Preferences prefs;
+        prefs.begin("perfiles", true);
+        int total = prefs.getInt("total", 1);
+        int activo = prefs.getInt("activo", 0);
+
+        String json = "{\"activo\":" + String(activo) + ",\"perfiles\":[";
+        for (int i = 0; i < total; i++) {
+            String key = "p_" + String(i) + "_nom";
+            String defNom = "Perfil " + String(i + 1);
+            String nom = prefs.getString(key.c_str(), defNom.c_str());
+
+            json += "{\"id\":" + String(i) + ",\"nombre\":\"" + nom + "\"}";
+            if (i < total - 1) json += ",";
+        }
+        json += "]}";
+        prefs.end();
+
+        server.send(200, "application/json", json);
+    });
+
+    server.on("/getPerfil", HTTP_GET, []() {
+        int id = server.hasArg("id") ? server.arg("id").toInt() : perfilActualID;
+        cargarPerfil(id);
+
+        Preferences prefs;
+        prefs.begin("perfiles", false);
+        prefs.putInt("activo", id);
+        prefs.end();
+
+        String json = "{";
+        json += "\"id\":" + String(perfilActualID);
+        json += ",\"pwmMax\":" + String(perfilActivo.pwmMax);
+        json += ",\"kIzq\":" + String(perfilActivo.kIzq);
+        json += ",\"kDer\":" + String(perfilActivo.kDer);
+        json += ",\"anguloGiro\":" + String(perfilActivo.anguloGiro);
+        json += ",\"invX\":" + String(perfilActivo.invertirEjeX ? 1 : 0);
+        json += ",\"invY\":" + String(perfilActivo.invertirEjeY ? 1 : 0);
+        json += ",\"zm\":" + String(perfilActivo.zonaMuerta);
+        json += ",\"btnF\":" + String(perfilActivo.btnAdelante);
+        json += ",\"btnB\":" + String(perfilActivo.btnAtras);
+        json += ",\"btnL\":" + String(perfilActivo.btnIzq);
+        json += ",\"btnR\":" + String(perfilActivo.btnDer);
+        
+        // 📍 NUEVOS CAMPOS EN JSON
+        json += ",\"kGiro\":" + String(perfilActivo.kGiro, 2);
+        json += ",\"stickGiro\":" + String(perfilActivo.stickGiro);
+        json += "}";
+
+        server.send(200, "application/json", json);
+    });
+
+    server.on("/guardarPerfil", HTTP_GET, []() {
+        if (!server.hasArg("id")) {
+            server.send(400, "text/plain", "Falta ID");
+            return;
         }
 
-        window.onload = function(){
-
-            cargarConfiguracion();
-            actualizarBateria();
-            setInterval(actualizarBateria, 1000);
-        };
-  
-    </script>
-
-    </body>
-    </html>
-
-
-)rawliteral";
-    server.send(200, "text/html", html);
-});
-
-server.on("/authorize", [](){
-
-    if(server.hasArg("id")){
+        PerfilConfig p;
         int id = server.arg("id").toInt();
 
-        if(gamepads[id].connected){
-            memcpy(allowedController, gamepads[id].ctl->getProperties().btaddr, 6);
+        if (server.hasArg("nombre")) {
+            String nom = server.arg("nombre");
+            snprintf(p.nombre, sizeof(p.nombre), "%s", nom.c_str());
+        } else {
+            snprintf(p.nombre, sizeof(p.nombre), "Perfil %d", id + 1);
+        }
 
-            prefs.begin("gamepad", false);
-            prefs.putBytes("mac", allowedController, 6);
+        p.pwmMax = server.arg("pwmMax").toInt();
+        p.kIzq = server.arg("kIzq").toInt();
+        p.kDer = server.arg("kDer").toInt();
+        p.anguloGiro = server.arg("anguloGiro").toInt();
+
+        p.invertirEjeX = server.arg("invX") == "1";
+        p.invertirEjeY = server.arg("invY") == "1";
+        p.zonaMuerta = server.arg("zm").toInt();
+
+        p.btnAdelante = server.arg("btnF").toInt();
+        p.btnAtras = server.arg("btnB").toInt();
+        p.btnIzq = server.arg("btnL").toInt();
+        p.btnDer = server.arg("btnR").toInt();
+
+        p.kGiro = server.arg("kGiro").toFloat();
+        p.stickGiro = server.arg("stickGiro").toInt();
+
+        guardarPerfil(id, p);
+        server.send(200, "text/plain", "Perfil guardado");
+    });
+
+    server.on("/eliminarPerfil", HTTP_GET, []() {
+        if (!server.hasArg("id")) {
+            server.send(400, "text/plain", "Falta ID");
+            return;
+        }
+
+        int idABorrar = server.arg("id").toInt();
+        
+        Preferences prefs;
+        prefs.begin("perfiles", false);
+        int total = prefs.getInt("total", 1);
+
+        if (total <= 1) {
             prefs.end();
-
-            whitelistEnabled = true;
-            authorizedGamepad = gamepads[id].mac;
-
-            server.send(200, "text/plain", "Autorizado");
-
+            server.send(400, "text/plain", "No se puede eliminar el único perfil");
             return;
         }
-    }
 
-    server.send(400, "text/plain", "Error");
-});
+        // Reorganizar los índices desplazando los posteriores hacia la izquierda
+        for (int i = idABorrar; i < total - 1; i++) {
+            String keyCurrent = "p_" + String(i) + "_";
+            String keyNext = "p_" + String(i + 1) + "_";
 
-server.on("/clear", []() {
+            prefs.putString((keyCurrent + "nom").c_str(), prefs.getString((keyNext + "nom").c_str(), ""));
+            prefs.putInt((keyCurrent + "pwm").c_str(), prefs.getInt((keyNext + "pwm").c_str(), 220));
+            prefs.putInt((keyCurrent + "ki").c_str(), prefs.getInt((keyNext + "ki").c_str(), 0));
+            prefs.putInt((keyCurrent + "kd").c_str(), prefs.getInt((keyNext + "kd").c_str(), 0));
+            prefs.putInt((keyCurrent + "ang").c_str(), prefs.getInt((keyNext + "ang").c_str(), 180));
+            prefs.putBool((keyCurrent + "ix").c_str(), prefs.getBool((keyNext + "ix").c_str(), false));
+            prefs.putBool((keyCurrent + "iy").c_str(), prefs.getBool((keyNext + "iy").c_str(), false));
+            prefs.putInt((keyCurrent + "zm").c_str(), prefs.getInt((keyNext + "zm").c_str(), 10));
+            prefs.putInt((keyCurrent + "ba").c_str(), prefs.getInt((keyNext + "ba").c_str(), 1));
+            prefs.putInt((keyCurrent + "bb").c_str(), prefs.getInt((keyNext + "bb").c_str(), 2));
+            prefs.putInt((keyCurrent + "bi").c_str(), prefs.getInt((keyNext + "bi").c_str(), 3));
+            prefs.putInt((keyCurrent + "bd").c_str(), prefs.getInt((keyNext + "bd").c_str(), 4));
+        }
 
-    prefs.begin("gamepad", false);
-    prefs.clear();
-    prefs.end();
-    whitelistEnabled = false;
-    authorizedGamepad = "Ninguno";
-    server.send(200, "text/plain", "Whitelist borrada");
-});
+        // Eliminar el último que quedó duplicado tras la reestructuración
+        String lastKey = "p_" + String(total - 1) + "_";
+        prefs.remove((lastKey + "nom").c_str());
+        prefs.remove((lastKey + "pwm").c_str());
+        
+        prefs.putInt("total", total - 1);
+        prefs.putInt("activo", 0); // Regresar al perfil 0 por seguridad
+        prefs.end();
 
-server.on("/disconnect", [](){
+        cargarPerfil(0);
+        server.send(200, "text/plain", "Perfil eliminado correctamente");
+    });
 
-    if(server.hasArg("id")){
-        int id = server.arg("id").toInt();
+    server.on("/bateria", HTTP_GET, []() {
+        String json = "{";
+        json += "\"voltaje\":" + String(voltajeBateria, 2);
+        json += ",\"historial\":" + obtenerHistorialJSON();
+        json += "}";
+        server.send(200, "application/json", json);
+    });
 
-        if(gamepads[id].connected){
-            gamepads[id].ctl->disconnect();
-            server.send(200, "text/plain", "Desconectado");
+    server.on("/girar", HTTP_GET, []() {
+        if (!server.hasArg("direccion") || !server.hasArg("angulo")) {
+            server.send(400, "text/plain", "Error");
             return;
         }
-    }
+        String direccion = server.arg("direccion");
+        int grados = server.arg("angulo").toInt();
 
-    server.send(400, "text/plain", "Error");
-});
+        if (direccion == "izquierda") giroIzquierda(grados);
+        else if (direccion == "derecha") giroDerecha(grados);
 
-// ==========================================================
-// ================= DATOS DE BATERÍA =======================
-// ==========================================================
-
-server.on("/bateria", HTTP_GET, []() {
-
-    String json = "{";
-
-    json += "\"voltaje\":";
-    json += String(voltajeBateria, 2);
-
-    json += ",\"adc\":";
-    json += String(analogRead(PIN_BATERIA));
-
-    json += ",\"historial\":";
-    json += obtenerHistorialJSON();
-
-    json += "}";
-
-    server.send(
-        200,
-        "application/json",
-        json
-    );
-});
-
-server.on("/config", HTTP_GET, []() {
-
-    String json = "{";
-
-    json += "\"pwmMax\":" + String(PWM_MAX);
-    json += ",\"kIzq\":" + String(K_IZQ);
-    json += ",\"kDer\":" + String(K_DER);
-    json += ",\"anguloGiro\":" + String(anguloGiro);
-
-    json += "}";
-
-    server.send(200, "application/json", json);
-});
-
-server.on("/guardar", HTTP_GET, []() {
-
-    if (server.hasArg("pwmMax"))
-        PWM_MAX = server.arg("pwmMax").toInt();
-
-    if (server.hasArg("kIzq"))
-        K_IZQ = server.arg("kIzq").toInt();
-
-    if (server.hasArg("kDer"))
-        K_DER = server.arg("kDer").toInt();
-
-    if (server.hasArg("anguloGiro"))
-        anguloGiro = server.arg("anguloGiro").toInt();
-
-    guardarConfiguracionMotores();
-    server.send(200, "text/plain", "Configuración guardada");
-});
-
-server.on("/girar", HTTP_GET, []() {
-
-    if (!server.hasArg("direccion") || !server.hasArg("angulo")) {
-        server.send(400, "text/plain", "Faltan parametros");
-        return;
-    }
-
-    String direccion = server.arg("direccion");
-
-    int grados = server.arg("angulo").toInt();
-
-    if (grados != 45 && grados != 90 && grados != 180 && grados != 270 && grados != 360) {
-        server.send(400, "text/plain", "Angulo no permitido");
-        return;
-    }
-
-/*
-    Serial.print("Giro solicitado: ");
-    Serial.print(direccion);
-    Serial.print(" ");
-    Serial.print(anguloGiro);
-    Serial.println(" grados");
-*/
-
-    if (direccion == "izquierda") {
-
-        giroIzquierda(grados);
-
-        server.send(
-            200,
-            "text/plain",
-            "Giro izquierda " + String(anguloGiro) + " grados"
-        );
-
-        return;
-    }
-
-
-    if (direccion == "derecha") {
-        giroDerecha(grados);
-
-        server.send(
-            200,
-            "text/plain",
-            "Giro derecha " + String(anguloGiro) + " grados"
-        );
-
-        return;
-    }
-
-
-    server.send(400, "text/plain", "Direccion no valida");
-});
+        server.send(200, "text/plain", "Giro ejecutado");
+    });
 
     server.begin();
-    Serial.println("Servidor web iniciado");
+        
+        // Lanza la tarea del Servidor Web en el NÚCLEO 0
+        xTaskCreatePinnedToCore(
+            TaskWebServer,    // Función de la tarea
+            "TaskWebServer",  // Nombre
+            10000,            // Tamaño de stack
+            NULL,             // Parámetros
+            1,                // Prioridad
+            NULL,             // Handle
+            0                 // Core 0 (El control de motores correrá libre en Core 1)
+        );
 
-    // Setear los callbacks del Bluepad32
-    BP32.setup(&onConnectedController, &onDisconnectedController);
-
-    // El siguiente comando permite borrar la lista de conexiones para reset.
-    // BP32.forgetBluetoothKeys();
-}
+        BP32.setup(&onConnectedController, &onDisconnectedController);
+    }
 
 // ========================================================================
 // ============================== LOOP ==============================
 // ========================================================================
 
 void loop() {
-// ================= BATERÍA =================
     if (millis() - ultimaLecturaBateria >= INTERVALO_BATERIA) {
         ultimaLecturaBateria = millis();
         leerBateria();
     }
 
-// Esta función permite controlar la duración del AP, ya sean 2 minutos al inciar el ESP
-// o tiempo indefinido con los botones de start y select.
-    controlarAccessPoint();
-
-    if (apActivo) {
-        server.handleClient();
-    }
-
     bool dataUpdated = BP32.update();
+    if (dataUpdated) processControllers();
 
-    if (dataUpdated)
-        processControllers();
-
-    // Se recorre la lista de mandos conectados, y si hay uno conectado y está enviando información: 
     for (auto ctl : myControllers) {
+        if (!ctl || !ctl->isConnected() || !ctl->hasData()) continue;
+        if (!isControllerAllowed(ctl)) continue;            
 
-        if (!ctl || !ctl->isConnected() || !ctl->hasData())
-            continue;
-
-        // Se bloquea si no está autorizado
-        if (!isControllerAllowed(ctl))
-            continue;            
-
-// ================= CONTROL MANUAL DEL AP =================
-    // START → encender AP permanentemente
         bool botonStart = ctl->miscStart();
-
-        if (botonStart && !botonStartAnterior) {
-            //Serial.println("START -> Encendiendo AP");
-            iniciarAccessPoint(false);
-        }
-
+        if (botonStart && !botonStartAnterior) iniciarAccessPoint(false);
         botonStartAnterior = botonStart;
 
-    // SELECT → apagar AP
         bool botonSelect = ctl->miscSelect();
-
-        if (botonSelect && !botonSelectAnterior) {
-            //Serial.println("SELECT -> Apagando AP");
-            apagarAccessPoint();
-        }
-
+        if (botonSelect && !botonSelectAnterior) apagarAccessPoint();
         botonSelectAnterior = botonSelect;
 
-        // Booleano para detectar si se detectó los botones para subir y bajar la velocidad
-        // sabiendo también si antes se presionó o no para que no haya efecto rebote.
-        static bool prevY = false;
-        static bool prevA = false;
+        static bool prevY = false, prevA = false;
+        bool y = ctl->dpad() & DPAD_UP;
+        bool a = ctl->dpad() & DPAD_DOWN;
 
-        bool y = ctl->dpad() & DPAD_UP; // subir
-        bool a = ctl->dpad() & DPAD_DOWN; // bajar
+        if (y && !prevY) controlVelocidad(true, false);
+        if (a && !prevA) controlVelocidad(false, true);
 
-        // Si se apretó un botón, y antes no estaba apretado, entonces le envía a la función para controlar la velocidad, 
-        // el botón correspondiente en 'true'.
-        if (y && !prevY) {
-            controlVelocidad(true, false);
-        }
-        if (a && !prevA) {
-            controlVelocidad(false, true);
-        }
+        prevY = y; prevA = a;
 
-        // Se actualizan el estado previo del botón:
-        prevY = y;
-        prevA = a;
+        procesarBotonesDinamicos(ctl);
 
-        // ================= CONTROL POR BOTONES =================
-        antiReboteTriang(ctl);
-        antiReboteCruz(ctl);
-        antiReboteCirc(ctl);
-        antiReboteCuad(ctl);
-
-        // ================= CONTROL POR STICK =================
-        bool botonMovimiento = ctl->y() || ctl->a() || ctl->b() || ctl->x();
+        bool botonMovimiento = estaBotonPresionado(ctl, perfilActivo.btnAdelante) ||
+                               estaBotonPresionado(ctl, perfilActivo.btnAtras) ||
+                               estaBotonPresionado(ctl, perfilActivo.btnIzq) ||
+                               estaBotonPresionado(ctl, perfilActivo.btnDer);
 
         static unsigned long ultimoIzquierda = 0;
         if (ctl->brake() && millis() - ultimoIzquierda > tiempoRebote) {
-            giroIzquierda(anguloGiro);
+            giroIzquierda(perfilActivo.anguloGiro);
             ultimoIzquierda = millis();
         }
         
         static unsigned long ultimoDerecha = 0;
         if (ctl->throttle() && millis() - ultimoDerecha > tiempoRebote) {
-            giroDerecha(anguloGiro);
+            giroDerecha(perfilActivo.anguloGiro);
             ultimoDerecha = millis();
         }
 
-        // Si apreto R1, entonces se activa el turbo y los motores de adelante aceleran en línea recta a todo lo que da el PWM
         bool turbo = ctl->r1();
-        
-        // Serial.printf("Botones: %2X:%2X:%2X\n", ctl->brake(), ctl->throttle(), ctl->r1());
-        
+
         if (!botonMovimiento) { 
             movimiento(ctl, turbo); 
         }

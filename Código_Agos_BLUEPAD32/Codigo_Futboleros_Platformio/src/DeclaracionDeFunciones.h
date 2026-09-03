@@ -31,9 +31,21 @@ void detenerMotores();
 void leerBateria();
 String obtenerHistorialJSON();
 
+// Botones:
 void antiReboteTriang(ControllerPtr ctl);
 void antiReboteCruz(ControllerPtr ctl);
 void antiReboteCirc(ControllerPtr ctl);
 void antiReboteCuad(ControllerPtr ctl);
 
+bool estaBotonPresionado(ControllerPtr ctl, uint8_t botonID);
+void procesarBotonesDinamicos(ControllerPtr ctl);
+
 void escribirPWM (int adelanteIzq, int atrasIzq, int adelanteDer, int atrasDer);
+
+// Configuración de perfiles:
+void cargarPerfil(int id);
+void guardarPerfil(int id, PerfilConfig p);
+
+void TaskWebServer(void *pvParameters);
+
+int aplicarZonaMuerta(int valor, int zonaMuerta);
