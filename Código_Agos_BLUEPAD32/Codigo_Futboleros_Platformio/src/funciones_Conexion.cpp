@@ -226,3 +226,37 @@ void processControllers() {
         }
     }
 }
+
+// ===========
+
+// Convierte la dirección MAC del joystick a String
+String obtenerMACJoystick(ControllerPtr ctl) {
+    if (!ctl) return "";
+    const uint8_t* addr = ctl->getProperties().btaddr;
+    char macStr[18];
+    snprintf(macStr, sizeof(macStr), "%02X:%02X:%02X:%02X:%02X:%02X",
+             addr[0], addr[1], addr[2], addr[3], addr[4], addr[5]);
+    return String(macStr);
+}
+
+// Devuelve el apodo guardado, o la MAC si no tiene apodo asignado
+String obtenerNombreJoystick(ControllerPtr ctl) {
+    if (!ctl) return "Desconocido";
+    String mac = obtenerMACJoystick(ctl);
+
+    Preferences prefs;
+    prefs.begin("joysticks", true); // Modo lectura
+    String alias = prefs.getString(mac.c_str(), "");
+    prefs.end();
+
+    if (alias.length() > 0) return alias;
+    return mac; // Si no hay alias guardado, muestra la MAC
+}
+
+// Guarda un nuevo apodo para una MAC dada
+void guardarNombreJoystick(String mac, String nuevoNombre) {
+    Preferences prefs;
+    prefs.begin("joysticks", false); // Modo lectura/escritura
+    prefs.putString(mac.c_str(), nuevoNombre);
+    prefs.end();
+}

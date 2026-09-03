@@ -49,3 +49,7 @@ void guardarPerfil(int id, PerfilConfig p);
 void TaskWebServer(void *pvParameters);
 
 int aplicarZonaMuerta(int valor, int zonaMuerta);
+
+String obtenerMACJoystick(ControllerPtr ctl);
+String obtenerNombreJoystick(ControllerPtr ctl);
+void guardarNombreJoystick(String mac, String nuevoNombre);

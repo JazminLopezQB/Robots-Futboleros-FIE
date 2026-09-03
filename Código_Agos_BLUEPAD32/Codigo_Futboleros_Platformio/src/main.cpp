@@ -7,6 +7,7 @@
 #include <WebServer.h>
 #include <Preferences.h>
 
+Preferences prefs;
 // ========================================================================
 // ============================== SETUP ==============================
 // ========================================================================
@@ -255,34 +256,16 @@ void setup() {
                     <div id="mensajeGiro" class="message"></div>
                 </div>
 
-                <!-- MANDOS CONECTADOS -->
+                <!-- MANDOS DETECTADOS Y RENOMBRAR -->
                 <div class="card">
-                    <div class="card-title">Joystick Autorizado</div>
-                    <p style="word-break:break-all; color:#58a6ff; margin:0; font-family:monospace;">
-        )rawliteral";
-        html += authorizedGamepad;
-        html += R"rawliteral(
-                    </p>
-                </div>
-
-                <div class="card">
-                    <div class="card-title">Mandos Detectados</div>
-        )rawliteral";
-
-        for (int i = 0; i < BP32_MAX_GAMEPADS; i++) {
-            if (gamepads[i].connected) {
-                html += "<div style='margin-bottom:10px;'><b>" + String(gamepads[i].name) + "</b> (" + String(gamepads[i].mac) + ")</div>";
-                html += "<div class='grid-2'>";
-                html += "<button class='btn-primary' onclick=\"fetch('/authorize?id=" + String(i) + "').then(()=>location.reload())\">Autorizar</button>";
-                html += "<button class='btn-danger' onclick=\"fetch('/disconnect?id=" + String(i) + "').then(()=>location.reload())\">Desconectar</button>";
-                html += "</div>";
-            }
-        }
-
-        html += R"rawliteral(
+                    <div class="card-title">Mandos Conectados</div>
+                    <div id="contenedorMandos">
+                        <p style="color:#8b949e; font-size:13px;">Cargando mandos...</p>
+                    </div>
+                    
                     <div class="grid-2" style="margin-top:15px;">
                         <button class="btn-danger" onclick="fetch('/clear').then(()=>location.reload())">Borrar Whitelist</button>
-                        <button class="btn-sec" onclick="location.reload()">Actualizar</button>
+                        <button class="btn-sec" onclick="cargarMandosWeb()">Actualizar</button>
                     </div>
                 </div>
 
@@ -295,8 +278,61 @@ void setup() {
                 window.onload = function() {
                     cargarListaPerfiles();
                     actualizarBateria();
+                    cargarMandosWeb();
                     setInterval(actualizarBateria, 2000);
+                    setInterval(cargarMandosWeb, 4000);
                 };
+
+                function cargarMandosWeb() {
+                    fetch('/getJoysticks')
+                    .then(response => response.json())
+                    .then(mandos => {
+                        const contenedor = document.getElementById("contenedorMandos");
+                        if (!mandos || mandos.length === 0) {
+                            contenedor.innerHTML = "<p style='color:#8b949e; font-size:13px;'>No hay joysticks conectados.</p>";
+                            return;
+                        }
+
+                        // Si el usuario está escribiendo en algún input, NO redibujamos para no interrumpir
+                        if (document.activeElement && document.activeElement.tagName === "INPUT" && document.activeElement.id.startsWith("input-alias-")) {
+                            return;
+                        }
+
+                        let html = "";
+                        mandos.forEach(m => {
+                            html += `
+                            <div style="background:#0d1117; border:1px solid #30363d; border-radius:10px; padding:12px; margin-bottom:10px;">
+                                <div style="font-size:12px; color:#8b949e; margin-bottom:4px;">MAC: <span style="font-family:monospace; color:#58a6ff;">${m.mac}</span> (Slot ${m.slot})</div>
+                                <div class="config-item" style="margin-top:0;">
+                                    <input type="text" id="input-alias-${m.slot}" value="${m.nombre}" placeholder="Ej: Mando Titular Agos" style="padding:8px 10px; font-size:13px;">
+                                </div>
+                                <div class="grid-3" style="margin-top:8px;">
+                                    <button class="btn-primary" onclick="guardarNombreMando('${m.mac}', ${m.slot})">💾 Nombre</button>
+                                    <button class="btn-teal" onclick="fetch('/authorize?id=${m.slot}').then(()=>location.reload())">Autorizar</button>
+                                    <button class="btn-danger" onclick="fetch('/disconnect?id=${m.slot}').then(()=>cargarMandosWeb())">Desconectar</button>
+                                </div>
+                            </div>`;
+                        });
+                        contenedor.innerHTML = html;
+                    })
+                    .catch(err => console.error("Error al obtener mandos:", err));
+                }
+
+                function guardarNombreMando(mac, slot) {
+                    const input = document.getElementById(`input-alias-${slot}`);
+                    if (!input) return;
+                    
+                    const nuevoNombre = input.value.trim();
+                    if (!nuevoNombre) return;
+
+                    fetch(`/renombrarJoystick?mac=${encodeURIComponent(mac)}&nombre=${encodeURIComponent(nuevoNombre)}`)
+                        .then(res => res.text())
+                        .then(data => {
+                            console.log("Respuesta servidor:", data);
+                            cargarMandosWeb(); // Recarga la lista para verificar el cambio
+                        })
+                        .catch(err => console.error("Error al renombrar:", err));
+                }
 
                 function cargarListaPerfiles() {
                     fetch('/listarPerfiles')
@@ -500,7 +536,71 @@ void setup() {
         server.send(400, "text/plain", "Error");
     });
 
-    server.on("/clear", []() {
+server.on("/getJoysticks", HTTP_GET, []() {
+        Preferences prefs;
+
+    String json = "[";
+    
+    prefs.begin("joysticks", true);
+
+    bool primero = true;
+    for (int i = 0; i < BP32_MAX_GAMEPADS; i++) {
+        ControllerPtr ctl = myControllers[i];
+        if (ctl && ctl->isConnected()) {
+            if (!primero) json += ",";
+            primero = false;
+
+            String mac = obtenerMACJoystick(ctl);
+            
+            // Generar exactamente la misma clave recortada
+            String clave = mac;
+            clave.replace(":", "");
+            if (clave.length() > 8) {
+                clave = clave.substring(clave.length() - 8);
+            }
+
+            // Si no encuentra nada guardado, asigna la MAC original como fallback
+            String nombreGuardado = prefs.getString(clave.c_str(), mac);
+
+            json += "{";
+            json += "\"slot\":" + String(i) + ",";
+            json += "\"mac\":\"" + mac + "\",";
+            json += "\"nombre\":\"" + nombreGuardado + "\"";
+            json += "}";
+        }
+    }
+    prefs.end();
+    json += "]";
+
+    server.send(200, "application/json", json);
+});
+
+// Endpoint 2: Recibe la MAC y el nuevo apodo desde la Web
+server.on("/renombrarJoystick", HTTP_GET, []() {
+        Preferences prefs;
+
+    if (server.hasArg("mac") && server.hasArg("nombre")) {
+        String mac = server.arg("mac");
+        String nombre = server.arg("nombre");
+
+        // Crear una clave de 8 caracteres (ej: "AABBCCDD") sin superar los 15 permitidos por NVS
+        String clave = mac;
+        clave.replace(":", "");
+        if (clave.length() > 8) {
+            clave = clave.substring(clave.length() - 8);
+        }
+
+        prefs.begin("joysticks", false);
+        prefs.putString(clave.c_str(), nombre);
+        prefs.end();
+
+        server.send(200, "text/plain", "OK");
+    } else {
+        server.send(400, "text/plain", "Parametros faltantes");
+    }
+});
+
+server.on("/clear", []() {
         Preferences prefs;
         prefs.begin("gamepad", false);
         prefs.clear();

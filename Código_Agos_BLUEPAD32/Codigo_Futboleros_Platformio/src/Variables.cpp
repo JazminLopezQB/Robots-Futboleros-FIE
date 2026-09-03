@@ -79,4 +79,4 @@ ControllerPtr myControllers[BP32_MAX_GAMEPADS] = {nullptr, nullptr, nullptr, nul
 WebServer server(80);
 
 // PREFERENCES
-Preferences prefs;
+extern Preferences prefs;
