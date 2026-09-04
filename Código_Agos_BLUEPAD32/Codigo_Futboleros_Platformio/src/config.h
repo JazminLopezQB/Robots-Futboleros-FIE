@@ -11,10 +11,10 @@
 #define ZONA_DRIFT 10
 
 // PINES DE MOTORES
-#define Atras_Izq 26
-#define Adelante_Izq 25
+#define Atras_Izq 25
+#define Adelante_Izq 26
 
-#define Atras_Der 21
+#define Atras_Der 19
 #define Adelante_Der 18
 
 // Ajustes - Recordatorio:

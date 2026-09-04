@@ -244,8 +244,8 @@ void iniciarAccessPoint(bool temporal) {
 
     WiFi.mode(WIFI_AP);
 
-    IPAddress local_IP(192, 168, 25, 1);
-    IPAddress gateway(192, 168, 25, 1);
+    IPAddress local_IP(192, 168, 24, 1);
+    IPAddress gateway(192, 168, 24, 1);
     IPAddress subnet(255, 255, 255, 0);
 
 // IP's para cada web (conviene para que no se mezclen si más de uno está prendido)
@@ -256,7 +256,7 @@ void iniciarAccessPoint(bool temporal) {
     WiFi.softAPConfig(local_IP, gateway, subnet);
 
 // Acá podés cambiar el nombre del wifi, también para que no sea confuso
-    bool ok = WiFi.softAP("Robot-Bella", "Fulbo123", 1, false, 1);
+    bool ok = WiFi.softAP("Robot-24", "Fulbo123", 1, false, 1);
 
     if (ok) {
         apActivo = true;
