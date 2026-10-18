@@ -11,10 +11,10 @@
 #define ZONA_DRIFT 10
 
 // PINES DE MOTORES
-#define Atras_Izq 25
-#define Adelante_Izq 26
+#define Atras_Izq 26
+#define Adelante_Izq 25
 
-#define Atras_Der 19
+#define Atras_Der 21
 #define Adelante_Der 18
 
 // Ajustes - Recordatorio:
@@ -47,7 +47,7 @@
 #define RESISTENCIA_INFERIOR 1500.0
 
 // LED
-#define PIN_LED 2 // 13
+#define PIN_LED 13 // 5
 
 // HISTORIAL
 #define MAX_HISTORIAL 300

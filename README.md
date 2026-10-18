@@ -69,21 +69,23 @@
 **Comentarios y Cambios por futbolero en el Código:** ^925762
 1. **Pinaje de las Placas y motores:**
 
-| Pines        | Bestia 1.0 | Bestia 2.0 | Bella |
-| ------------ | ---------- | ---------- | ----- |
-| Atras_Izq    | 25         | 25         | 26    |
-| Adelante_Izq | 26         | 26         | 25    |
-| Atras_Der    | 18         | 14         | 12    |
-| Adelante_Der | 21         | 12         | 14    |
-| PIN_LED 2    | 13         | 2          | 2     |
+| Pines        | Bestia 1.0 | Bestia 2.0 | Bella | Semental italiano |
+| ------------ | ---------- | ---------- | ----- | ----------------- |
+| Atras_Izq    | 25         | 25         | 26    | 21                |
+| Adelante_Izq | 26         | 26         | 25    | 19                |
+| Atras_Der    | 18         | 14         | 12    | 23                |
+| Adelante_Der | 21         | 12         | 14    | 22                |
+| PIN_LED 2    | 13         | 2          | 2     | 5                 |
 2. **Funciones:** para la Bestia 1.0, los pwm del movimiento se invierte en suma y resta; como tambien la funcion de manejo de botones en izquierda y derecha. 
 3. **WIFI e IP:** cambiar en el código los nombres y direcciones por robot para evitar confusión.
 
-| Robot      | IP           | SSID            |
-| ---------- | ------------ | --------------- |
-| Bestia 1.0 | 192.168.23.1 | Robot-Bestia1.0 |
-| Bestia 2.0 | 192.168.24.1 | Robot-Bestia2.0 |
-| Bella      | 192.168.25.1 | Robot-Bella     |
+| Robot                   | IP           | SSID            |
+| ---------------------   | ------------ | --------------- |
+| Bestia 1.0              | 192.168.23.1 | Robot-Bestia1.0 |
+| Bestia 2.0              | 192.168.24.1 | Robot-Bestia2.0 |
+| Bella                   | 192.168.25.1 | Robot-Bella     |
+| Semental Italiano       | 192.168.26.1 | Robot-Semental  |
+
 > [!Important] La contraseña para todos es "Fulbo123".
 
 **Funciones de la Página WEB:** ^1c89af

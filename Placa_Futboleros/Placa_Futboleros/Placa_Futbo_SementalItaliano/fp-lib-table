@@ -1,0 +1,5 @@
+(fp_lib_table
+	(version 7)
+	(lib (name "Drv_Motor_JDB37520") (type "KiCad") (uri "/home/loopez/Documentos/Robots/Robots-Futboleros-FIE/Placa_Futboleros/Librerías_Proyecto/Driver_Motor-JGB37520/Drv_Motor_JDB37520.pretty") (options "") (descr ""))
+	(lib (name "BTS7960") (type "KiCad") (uri "/home/loopez/Documentos/Robots/Robots-Futboleros-FIE/Placa_Futboleros/Librerías_Proyecto/BTS7960/BTS7960.pretty") (options "") (descr ""))
+)
