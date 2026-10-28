@@ -40,11 +40,11 @@ void setup() {
     ledcSetup(CH_ADELANTE_IZQ, PWM_FREQ, PWM_RES);
     ledcSetup(CH_ATRAS_IZQ, PWM_FREQ, PWM_RES);
 
-    ledcAttachPin(Adelante_Der, CH_ADELANTE_DER);
-    ledcAttachPin(Atras_Der, CH_ATRAS_DER);
-    ledcAttachPin(Adelante_Izq, CH_ADELANTE_IZQ);
-    ledcAttachPin(Atras_Izq, CH_ATRAS_IZQ);
-
+    ledcAttachPin(Adelante_Der, CH_ADELANTE_DER); // GPIO 22
+    ledcAttachPin(Atras_Der, CH_ATRAS_DER);       // GPIO 23
+    ledcAttachPin(Adelante_Izq, CH_ADELANTE_IZQ); // GPIO 19
+    ledcAttachPin(Atras_Izq, CH_ATRAS_IZQ);       // GPIO 21
+        
     pinMode(PIN_LED, OUTPUT);
 
     // ================= WIFI AP =================
