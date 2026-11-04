@@ -11,11 +11,11 @@
 #define ZONA_DRIFT 10
 
 // PINES DE MOTORES
-#define Atras_Izq     25 // PWM_L izquierdo
-#define Adelante_Izq  26  // PWM_R izquierdo
+#define Atras_Izq     19 // PWM_L izquierdo
+#define Adelante_Izq  21  // PWM_R izquierdo
 
-#define Atras_Der     18  // PWM_L derecho
-#define Adelante_Der  21  // PWM_R derecho
+#define Atras_Der     22  // PWM_L derecho
+#define Adelante_Der  23  // PWM_R derecho
 
 // Ajustes - Recordatorio:
     // Semental 21 19 23 22
@@ -74,6 +74,7 @@ extern float factorVelocidad;
 extern int nivelActual;
 extern const int cantNiveles;
 extern const float niveles[];
+extern int pwmTurbo;
 
 // TIEMPOS
 extern int tiempoGiro180;

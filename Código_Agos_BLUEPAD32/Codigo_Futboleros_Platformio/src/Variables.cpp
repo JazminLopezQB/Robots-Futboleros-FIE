@@ -27,6 +27,7 @@ String sentidoDer = "DETENIDO";
 
 // PWM
 uint8_t PWM_MAX = 220;
+int pwmTurbo = 255;
 
 // CONSTANTES K
 uint8_t K_IZQ = 0;

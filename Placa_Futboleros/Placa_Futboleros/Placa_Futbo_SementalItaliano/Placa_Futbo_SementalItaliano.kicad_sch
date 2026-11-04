@@ -2654,6 +2654,16 @@
 	)
 	(wire
 		(pts
+			(xy 38.1 33.02) (xy 38.1 27.94)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "61e94ffa-1236-4527-9a65-39cca7310dd6")
+	)
+	(wire
+		(pts
 			(xy 60.96 45.72) (xy 57.15 45.72)
 		)
 		(stroke
@@ -2744,6 +2754,16 @@
 	)
 	(wire
 		(pts
+			(xy 35.56 27.94) (xy 35.56 45.72)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "83b91071-f76d-455a-96c2-bc50ca8740ff")
+	)
+	(wire
+		(pts
 			(xy 44.45 45.72) (xy 41.91 45.72)
 		)
 		(stroke
@@ -2781,16 +2801,6 @@
 			(type default)
 		)
 		(uuid "92d6814f-bcca-40b4-834b-2d1c9a046c16")
-	)
-	(wire
-		(pts
-			(xy 35.56 33.02) (xy 35.56 45.72)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "98d3eaee-59c3-4dc7-9ed0-bfd0aff19109")
 	)
 	(wire
 		(pts
@@ -2851,6 +2861,16 @@
 			(type default)
 		)
 		(uuid "a640c1bd-b49f-42ea-8ee3-84e9277410a6")
+	)
+	(wire
+		(pts
+			(xy 38.1 27.94) (xy 35.56 27.94)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "af77b3a7-6cab-4e8d-bc0a-1af4d4c6e349")
 	)
 	(wire
 		(pts
@@ -3096,7 +3116,7 @@
 	)
 	(global_label "IN_M2At"
 		(shape input)
-		(at 128.27 46.99 0)
+		(at 128.27 44.45 0)
 		(fields_autoplaced yes)
 		(effects
 			(font
@@ -3106,7 +3126,7 @@
 		)
 		(uuid "21535aad-7803-496a-a02a-11401948fef0")
 		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 138.6333 46.99 0)
+			(at 139.0566 44.45 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -3336,7 +3356,7 @@
 	)
 	(global_label "IN_M2Ad"
 		(shape input)
-		(at 128.27 44.45 0)
+		(at 128.27 46.99 0)
 		(fields_autoplaced yes)
 		(effects
 			(font
@@ -3346,7 +3366,7 @@
 		)
 		(uuid "75b9c007-4644-4b7a-aafe-a74e4a731b96")
 		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 139.0566 44.45 0)
+			(at 138.6333 46.99 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -3432,7 +3452,7 @@
 	)
 	(global_label "IN_M1At"
 		(shape input)
-		(at 90.17 67.31 180)
+		(at 90.17 64.77 180)
 		(fields_autoplaced yes)
 		(effects
 			(font
@@ -3442,7 +3462,7 @@
 		)
 		(uuid "b869552a-2654-4b64-8adb-1671fb6291cb")
 		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 79.8067 67.31 0)
+			(at 79.3834 64.77 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -3456,7 +3476,7 @@
 	)
 	(global_label "IN_M1Ad"
 		(shape input)
-		(at 90.17 64.77 180)
+		(at 90.17 67.31 180)
 		(fields_autoplaced yes)
 		(effects
 			(font
@@ -3466,7 +3486,7 @@
 		)
 		(uuid "b9076ce3-cfb2-4a1b-81e9-2ad9c0e2ce9a")
 		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 79.3834 64.77 0)
+			(at 79.8067 67.31 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -4353,7 +4373,7 @@
 				)
 			)
 		)
-		(property "Footprint" "Connector_AMASS:AMASS_XT60-F_1x02_P7.20mm_Vertical"
+		(property "Footprint" "TerminalBlock_Phoenix:TerminalBlock_Phoenix_MKDS-1,5-2-5.08_1x02_P5.08mm_Horizontal"
 			(at 16.51 48.26 0)
 			(hide yes)
 			(show_name no)
@@ -4433,7 +4453,7 @@
 				)
 			)
 		)
-		(property "Footprint" "Connector_JST:JST_EH_B2B-EH-A_1x02_P2.50mm_Vertical"
+		(property "Footprint" "TerminalBlock_Phoenix:TerminalBlock_Phoenix_MKDS-1,5-2-5.08_1x02_P5.08mm_Horizontal"
 			(at 16.51 30.48 0)
 			(hide yes)
 			(show_name no)
@@ -4895,88 +4915,6 @@
 	)
 	(symbol
 		(lib_id "Connector:Conn_01x02_Pin")
-		(at 38.1 27.94 270)
-		(unit 1)
-		(body_style 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(in_pos_files yes)
-		(dnp no)
-		(fields_autoplaced yes)
-		(uuid "a1c29bd2-0c83-46dc-88aa-3234b02b9e85")
-		(property "Reference" "J1"
-			(at 39.37 27.3049 90)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Value" "Llave"
-			(at 39.37 29.8449 90)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Footprint" "Connector_JST:JST_EH_B2B-EH-A_1x02_P2.50mm_Vertical"
-			(at 38.1 27.94 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Datasheet" ""
-			(at 38.1 27.94 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Description" "Generic connector, single row, 01x02, script generated"
-			(at 38.1 27.94 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(pin "1"
-			(uuid "fd6c30df-2fd5-404f-858f-ff75289a534b")
-		)
-		(pin "2"
-			(uuid "9f1cba54-ad53-4b76-aea5-90cb4544a88d")
-		)
-		(instances
-			(project "Placa_Futbo_SementalItaliano"
-				(path "/1f909a45-afb4-43a8-aea9-e6c643cf888c"
-					(reference "J1")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
-		(lib_id "Connector:Conn_01x02_Pin")
 		(at 16.51 36.83 0)
 		(unit 1)
 		(body_style 1)
@@ -5007,7 +4945,7 @@
 				)
 			)
 		)
-		(property "Footprint" "Connector_JST:JST_EH_B2B-EH-A_1x02_P2.50mm_Vertical"
+		(property "Footprint" "TerminalBlock_Phoenix:TerminalBlock_Phoenix_MKDS-1,5-2-5.08_1x02_P5.08mm_Horizontal"
 			(at 16.51 36.83 0)
 			(hide yes)
 			(show_name no)
