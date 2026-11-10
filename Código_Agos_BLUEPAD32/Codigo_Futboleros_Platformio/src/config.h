@@ -11,14 +11,14 @@
 #define ZONA_DRIFT 10
 
 // PINES DE MOTORES
-#define Atras_Izq     19 // PWM_L izquierdo
-#define Adelante_Izq  21  // PWM_R izquierdo
+#define Atras_Izq     26 // PWM_L izquierdo
+#define Adelante_Izq  25  // PWM_R izquierdo
 
-#define Atras_Der     22  // PWM_L derecho
-#define Adelante_Der  23  // PWM_R derecho
+#define Atras_Der     21  // PWM_L derecho
+#define Adelante_Der  18  // PWM_R derecho
 
 // Ajustes - Recordatorio:
-    // Semental 21 19 23 22
+    // Semental 19 21 22 23
     // Bestia 2.0 - 25 26 19 18 
     // Bella 26 25 21 18
     // Bestia tranqui 25 26 21 18
@@ -48,7 +48,7 @@
 #define RESISTENCIA_INFERIOR 1500.0
 
 // LED
-#define PIN_LED 5 // 13
+#define PIN_LED 13 //2 //5
 
 // HISTORIAL
 #define MAX_HISTORIAL 300
